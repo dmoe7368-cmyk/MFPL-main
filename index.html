@@ -3,324 +3,106 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Watch-Along Dual Lineups</title>
-  <!-- Google Fonts: Display & UI -->
+  <title>Live Watch-Along Dual Lineups & Match HUD</title>
+  
+  <!-- Modern Sports Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
   
-  <style>
-    :root {
-      --primary: #2563EB;
-      --bg-glass: rgba(15, 23, 42, 0.88);
-      --card-border: rgba(255, 255, 255, 0.14);
-      --text-main: #FFFFFF;
-      --text-sub: #94A3B8;
-      --accent-gold: #F59E0B;
-      --pitch-line: rgba(255, 255, 255, 0.22);
-      --radius-xl: 16px;
-      --radius-sm: 8px;
-      --font-main: 'Plus Jakarta Sans', sans-serif;
-      --font-display: 'Teko', sans-serif;
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      background: #090D16;
-      font-family: var(--font-main);
-      color: var(--text-main);
-      min-height: 100vh;
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-    }
-
-    /* OBS Transparent Mode */
-    body.obs-mode {
-      background-color: transparent !important;
-    }
-
-    /* Controller Header */
-    .controller-bar {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 16px;
-      padding: 10px 20px;
-      background: rgba(15, 23, 42, 0.95);
-      border-bottom: 1px solid var(--card-border);
-      z-index: 100;
-      transition: all 0.3s ease;
-    }
-
-    .controller-bar.hidden {
-      display: none;
-    }
-
-    .select-group {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-    }
-
-    .select-group label {
-      font-size: 0.8rem;
-      font-weight: 700;
-      color: var(--text-sub);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    select {
-      background: #1E293B;
-      color: #FFF;
-      border: 1px solid var(--card-border);
-      padding: 6px 12px;
-      border-radius: var(--radius-sm);
-      font-family: var(--font-main);
-      font-size: 0.85rem;
-      font-weight: 600;
-      outline: none;
-      cursor: pointer;
-    }
-
-    .vs-badge {
-      font-family: var(--font-display);
-      font-size: 1.8rem;
-      color: var(--accent-gold);
-      letter-spacing: 2px;
-      line-height: 1;
-    }
-
-    .toggle-btn {
-      background: #334155;
-      color: #FFF;
-      border: 1px solid var(--card-border);
-      padding: 6px 14px;
-      border-radius: var(--radius-sm);
-      cursor: pointer;
-      font-size: 0.8rem;
-      font-weight: 600;
-      transition: background 0.2s;
-    }
-
-    .toggle-btn:hover {
-      background: #475569;
-    }
-
-    /* Arena Dual Container */
-    .arena-container {
-      flex: 1;
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 20px;
-      padding: 16px 24px;
-      height: calc(100vh - 55px);
-    }
-
-    .team-board {
-      background: var(--bg-glass);
-      border: 1px solid var(--card-border);
-      border-radius: var(--radius-xl);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      box-shadow: 0 16px 36px rgba(0, 0, 0, 0.6);
-      display: flex;
-      flex-direction: column;
-      padding: 16px;
-      position: relative;
-      overflow: hidden;
-    }
-
-    /* Team Header HUD */
-    .team-header {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-      padding-bottom: 12px;
-      border-bottom: 1px solid var(--card-border);
-    }
-
-    .team-badge {
-      width: 44px;
-      height: 44px;
-      background: linear-gradient(135deg, #1E293B, #0F172A);
-      border: 2px solid rgba(255, 255, 255, 0.2);
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-family: var(--font-display);
-      font-size: 1.5rem;
-      font-weight: 700;
-      letter-spacing: 1px;
-    }
-
-    .team-details .team-name {
-      font-size: 1.3rem;
-      font-weight: 800;
-      line-height: 1.2;
-    }
-
-    .formation-pill {
-      display: inline-block;
-      background: rgba(37, 99, 235, 0.25);
-      border: 1px solid rgba(37, 99, 235, 0.5);
-      color: #60A5FA;
-      font-size: 0.72rem;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 10px;
-      margin-top: 2px;
-    }
-
-    /* Pitch Tactical Display */
-    .pitch-surface {
-      position: relative;
-      flex: 1;
-      margin-top: 12px;
-      border-radius: 12px;
-      background: radial-gradient(circle at center, rgba(16, 44, 28, 0.95) 0%, rgba(6, 21, 13, 0.98) 100%);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      display: flex;
-      flex-direction: column;
-      justify-content: space-between;
-      padding: 14px 10px;
-      box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.6);
-      overflow: hidden;
-    }
-
-    /* Football Pitch Internal Lines */
-    .pitch-surface::before {
-      content: "";
-      position: absolute;
-      inset: 8px;
-      border: 1.5px solid var(--pitch-line);
-      border-radius: 6px;
-      pointer-events: none;
-    }
-
-    .pitch-surface::after {
-      content: "";
-      position: absolute;
-      top: 50%;
-      left: 8px;
-      right: 8px;
-      height: 1.5px;
-      background: var(--pitch-line);
-      pointer-events: none;
-    }
-
-    .pitch-row {
-      display: flex;
-      justify-content: space-around;
-      align-items: center;
-      width: 100%;
-      z-index: 2;
-    }
-
-    /* Player Slot & Jersey */
-    .player-slot {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      text-align: center;
-      transition: transform 0.2s ease;
-    }
-
-    .player-slot:hover {
-      transform: translateY(-2px);
-    }
-
-    .jersey-icon-wrap {
-      position: relative;
-      width: 40px;
-      height: 40px;
-      filter: drop-shadow(0 3px 6px rgba(0, 0, 0, 0.5));
-    }
-
-    .jersey-svg {
-      width: 100%;
-      height: 100%;
-    }
-
-    .player-role-badge {
-      position: absolute;
-      top: -3px;
-      right: -6px;
-      font-size: 0.55rem;
-      background: #0F172A;
-      color: #E2E8F0;
-      border: 1px solid var(--card-border);
-      padding: 1px 4px;
-      border-radius: 4px;
-      font-weight: 700;
-    }
-
-    .player-meta {
-      margin-top: 3px;
-      background: rgba(0, 0, 0, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      padding: 2px 6px;
-      border-radius: 5px;
-      backdrop-filter: blur(4px);
-    }
-
-    .player-name {
-      font-size: 0.72rem;
-      font-weight: 700;
-      color: #FFFFFF;
-      white-space: nowrap;
-      letter-spacing: 0.2px;
-    }
-  </style>
+  <link rel="stylesheet" href="style.css">
 </head>
-<body class="obs-mode">
+<body class="obs-transparent">
 
-  <!-- Controller Bar -->
-  <header class="controller-bar" id="controllerBar">
-    <div class="select-group">
-      <label for="homeSelect">Home</label>
-      <select id="homeSelect" aria-label="Select Home Team"></select>
+  <!-- Streamer Match Control Bar (Can be hidden during live stream) -->
+  <header class="controller-hub" id="controllerHub">
+    <!-- Home Team Select & Score -->
+    <div class="control-unit">
+      <label for="homeTeamSelect">Home Team</label>
+      <select id="homeTeamSelect" aria-label="Select Home Team"></select>
+      <div class="score-stepper">
+        <button type="button" id="homeScoreMinus" aria-label="Decrease Home Score">-</button>
+        <span class="stepper-val" id="ctrlHomeScore">0</span>
+        <button type="button" id="homeScorePlus" aria-label="Increase Home Score">+</button>
+      </div>
     </div>
-    <div class="vs-badge">VS</div>
-    <div class="select-group">
-      <label for="awaySelect">Away</label>
-      <select id="awaySelect" aria-label="Select Away Team"></select>
+
+    <!-- Central Match Timer Control -->
+    <div class="timer-control-unit">
+      <div class="timer-inputs">
+        <input type="number" id="manualMin" min="0" max="130" value="0" aria-label="Minutes">
+        <span>:</span>
+        <input type="number" id="manualSec" min="0" max="59" value="00" aria-label="Seconds">
+      </div>
+      <div class="timer-buttons">
+        <button type="button" id="timerStartBtn" class="btn-action">Start</button>
+        <button type="button" id="timerResetBtn" class="btn-action btn-secondary">Reset</button>
+      </div>
     </div>
-    <button class="toggle-btn" id="toggleControlsBtn" type="button">Hide Bar</button>
+
+    <!-- Away Team Select & Score -->
+    <div class="control-unit">
+      <label for="awayTeamSelect">Away Team</label>
+      <select id="awayTeamSelect" aria-label="Select Away Team"></select>
+      <div class="score-stepper">
+        <button type="button" id="awayScoreMinus" aria-label="Decrease Away Score">-</button>
+        <span class="stepper-val" id="ctrlAwayScore">0</span>
+        <button type="button" id="awayScorePlus" aria-label="Increase Away Score">+</button>
+      </div>
+    </div>
+
+    <button type="button" id="toggleHudBtn" class="btn-toggle">Hide Controls</button>
   </header>
 
-  <!-- Dual Lineup Canvas -->
-  <main class="arena-container">
-    <!-- Home Team -->
-    <section class="team-board" id="homeBoard">
-      <div class="team-header">
-        <div class="team-badge" id="homeBadge">ARS</div>
-        <div class="team-details">
-          <h1 class="team-name" id="homeName">Arsenal</h1>
-          <span class="formation-pill" id="homeFormation">4-2-3-1</span>
-        </div>
-      </div>
-      <div class="pitch-surface" id="homePitch"></div>
-    </section>
+  <!-- Live Broadcast HUD Header (Visible to Viewers) -->
+  <section class="live-scoreboard-bar">
+    <div class="sb-team sb-home">
+      <span class="sb-badge" id="hudHomeBadge">ARS</span>
+      <span class="sb-name" id="hudHomeName">Arsenal</span>
+      <span class="sb-score" id="hudHomeScore">0</span>
+    </div>
 
-    <!-- Away Team -->
-    <section class="team-board" id="awayBoard">
-      <div class="team-header">
-        <div class="team-badge" id="awayBadge">CHE</div>
-        <div class="team-details">
-          <h1 class="team-name" id="awayName">Chelsea</h1>
-          <span class="formation-pill" id="awayFormation">3-4-2-1</span>
+    <div class="sb-clock-center">
+      <div class="clock-display" id="hudClock">00:00</div>
+      <div class="match-status-badge" id="hudMatchHalf">1ST HALF</div>
+    </div>
+
+    <div class="sb-team sb-away">
+      <span class="sb-score" id="hudAwayScore">0</span>
+      <span class="sb-name" id="hudAwayName">Chelsea</span>
+      <span class="sb-badge" id="hudAwayBadge">CHE</span>
+    </div>
+  </section>
+
+  <!-- Dual Tactical Pitch Stage -->
+  <main class="arena-grid">
+    <!-- Home Team Tactical Pitch -->
+    <article class="tactical-card" id="homeCard">
+      <div class="card-meta">
+        <div class="card-meta-title">
+          <span class="meta-badge" id="cardHomeBadge">ARS</span>
+          <span class="meta-name" id="cardHomeName">Arsenal</span>
         </div>
+        <span class="meta-formation" id="cardHomeFormation">4-2-3-1</span>
       </div>
-      <div class="pitch-surface" id="awayPitch"></div>
-    </section>
+      <div class="tactical-pitch" id="homePitchSurface">
+        <!-- Injected via lineup.js -->
+      </div>
+    </article>
+
+    <!-- Away Team Tactical Pitch -->
+    <article class="tactical-card" id="awayCard">
+      <div class="card-meta">
+        <div class="card-meta-title">
+          <span class="meta-badge" id="cardAwayBadge">CHE</span>
+          <span class="meta-name" id="cardAwayName">Chelsea</span>
+        </div>
+        <span class="meta-formation" id="cardAwayFormation">3-4-2-1</span>
+      </div>
+      <div class="tactical-pitch" id="awayPitchSurface">
+        <!-- Injected via lineup.js -->
+      </div>
+    </article>
   </main>
 
   <script src="assets/js/lineup.js"></script>
