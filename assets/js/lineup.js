@@ -1,199 +1,104 @@
 /**
  * Watch-Along Live Broadcast Engine
- * Features: Auto Team Rotation (10s), Embedded Teams Registry, HD Vector Kits, Live Timer & Scoreboard
+ * Handles Real Club Logos, Real Outfield/GK Kits, Tactical Role Separation & Scoreboard
  */
 
-// 20 Clubs Fallback Registry to Guarantee Display on Static Hosts
-const FALLBACK_REGISTRY = {
-  "1": {
-    teamId: 1, teamName: "Arsenal", shortName: "ARS", teamCode: "ars", formation: "4-2-3-1",
-    lineup: [
-      { name: "Raya", pos: "GK", role: "GK" },
-      { name: "Calafiori", pos: "DEF", role: "LB" },
-      { name: "Gabriel", pos: "DEF", role: "LCB" },
-      { name: "Konsa", pos: "DEF", role: "RCB" },
-      { name: "Timber", pos: "DEF", role: "RB" },
-      { name: "Guimarães", pos: "MID", role: "LDM" },
-      { name: "Rice", pos: "MID", role: "RDM" },
-      { name: "Tzolis", pos: "MID", role: "LAM" },
-      { name: "Ødegaard", pos: "MID", role: "CAM" },
-      { name: "Saka", pos: "MID", role: "RAM" },
-      { name: "Havertz", pos: "FWD", role: "ST" }
-    ]
-  },
-  "2": {
-    teamId: 2, teamName: "Aston Villa", shortName: "AVL", teamCode: "avl", formation: "4-2-3-1",
-    lineup: [
-      { name: "Suzuki", pos: "GK", role: "GK" },
-      { name: "Ruggeri", pos: "DEF", role: "LB" },
-      { name: "Mings", pos: "DEF", role: "LCB" },
-      { name: "Lindelöf", pos: "DEF", role: "RCB" },
-      { name: "Wan-Bissaka", pos: "DEF", role: "RB" },
-      { name: "Gomes", pos: "MID", role: "LDM" },
-      { name: "Kamara", pos: "MID", role: "RDM" },
-      { name: "Buendía", pos: "MID", role: "LAM" },
-      { name: "Manzambi", pos: "MID", role: "CAM" },
-      { name: "McGinn", pos: "MID", role: "RAM" },
-      { name: "Jackson", pos: "FWD", role: "ST" }
-    ]
-  },
-  "6": {
-    teamId: 6, teamName: "Chelsea", shortName: "CHE", teamCode: "che", formation: "3-4-2-1",
-    lineup: [
-      { name: "Martínez", pos: "GK", role: "GK" },
-      { name: "Colwill", pos: "DEF", role: "LCB" },
-      { name: "Lacroix", pos: "DEF", role: "CB" },
-      { name: "Fofana", pos: "DEF", role: "RCB" },
-      { name: "Chavarría", pos: "MID", role: "LWB" },
-      { name: "Barco", pos: "MID", role: "LDM" },
-      { name: "Henderson", pos: "MID", role: "RDM" },
-      { name: "Neto", pos: "MID", role: "RWB" },
-      { name: "Rogers", pos: "MID", role: "LAM" },
-      { name: "Palmer", pos: "MID", role: "RAM" },
-      { name: "Welbeck", pos: "FWD", role: "ST" }
-    ]
-  },
-  "14": {
-    teamId: 14, teamName: "Liverpool", shortName: "LIV", teamCode: "liv", formation: "4-2-3-1",
-    lineup: [
-      { name: "Alisson", pos: "GK", role: "GK" },
-      { name: "Kerkez", pos: "DEF", role: "LB" },
-      { name: "van Dijk", pos: "DEF", role: "LCB" },
-      { name: "Jacquet", pos: "DEF", role: "RCB" },
-      { name: "Araujo", pos: "DEF", role: "RB" },
-      { name: "Mac Allister", pos: "MID", role: "LDM" },
-      { name: "Szoboszlai", pos: "MID", role: "RDM" },
-      { name: "Barcola", pos: "MID", role: "LAM" },
-      { name: "Wirtz", pos: "MID", role: "CAM" },
-      { name: "Gakpo", pos: "MID", role: "RAM" },
-      { name: "Isak", pos: "FWD", role: "ST" }
-    ]
-  },
-  "15": {
-    teamId: 15, teamName: "Manchester City", shortName: "MCI", teamCode: "mci", formation: "4-2-3-1",
-    lineup: [
-      { name: "Donnarumma", pos: "GK", role: "GK" },
-      { name: "Gvardiol", pos: "DEF", role: "LB" },
-      { name: "Guéhi", pos: "DEF", role: "LCB" },
-      { name: "Dias", pos: "DEF", role: "RCB" },
-      { name: "Nunes", pos: "DEF", role: "RB" },
-      { name: "Anderson", pos: "MID", role: "LDM" },
-      { name: "Fernández", pos: "MID", role: "RDM" },
-      { name: "Semenyo", pos: "MID", role: "LAM" },
-      { name: "Cherki", pos: "MID", role: "CAM" },
-      { name: "Ndiaye", pos: "MID", role: "RAM" },
-      { name: "Haaland", pos: "FWD", role: "ST" }
-    ]
-  },
-  "16": {
-    teamId: 16, teamName: "Manchester United", shortName: "MUN", teamCode: "mun", formation: "4-2-3-1",
-    lineup: [
-      { name: "Lammens", pos: "GK", role: "GK" },
-      { name: "Shaw", pos: "DEF", role: "LB" },
-      { name: "Martínez", pos: "DEF", role: "LCB" },
-      { name: "Maguire", pos: "DEF", role: "RCB" },
-      { name: "Dalot", pos: "DEF", role: "RB" },
-      { name: "Mainoo", pos: "MID", role: "LDM" },
-      { name: "Tielemans", pos: "MID", role: "RDM" },
-      { name: "Rashford", pos: "MID", role: "LAM" },
-      { name: "Fernandes", pos: "MID", role: "CAM" },
-      { name: "Mbeumo", pos: "MID", role: "RAM" },
-      { name: "Cunha", pos: "FWD", role: "ST" }
-    ]
-  }
+const CONFIG = {
+  dataPath: 'assets/data/custom-lineups.json',
+  clubsPath: 'assets/images/clubs/',
+  jerseysPath: 'assets/images/jerseys/outfield/',
+  gkJerseysPath: 'assets/images/jerseys/gk/'
 };
 
 let teamsData = {};
-
-// Kit themes (Primary, Secondary, Goalkeeper)
-const TEAM_COLORS = {
-  ars: { primary: '#EF0107', secondary: '#FFFFFF', gk: '#00FF66' },
-  avl: { primary: '#95BFE5', secondary: '#670E36', gk: '#FFE600' },
-  bou: { primary: '#DA020E', secondary: '#000000', gk: '#00E5FF' },
-  bre: { primary: '#E30613', secondary: '#FFFFFF', gk: '#FFCC00' },
-  bha: { primary: '#0057B8', secondary: '#FFFFFF', gk: '#FF0055' },
-  che: { primary: '#034694', secondary: '#EE2737', gk: '#E8C838' },
-  cov: { primary: '#5CABE0', secondary: '#000000', gk: '#FF8A00' },
-  cry: { primary: '#1B458F', secondary: '#C4122E', gk: '#76FF03' },
-  eve: { primary: '#003399', secondary: '#FFFFFF', gk: '#00E5FF' },
-  ful: { primary: '#FFFFFF', secondary: '#000000', gk: '#FFD700' },
-  hul: { primary: '#F5971E', secondary: '#000000', gk: '#39FF14' },
-  ips: { primary: '#004494', secondary: '#FFFFFF', gk: '#FF007F' },
-  lee: { primary: '#FFFFFF', secondary: '#1D428A', gk: '#00FF85' },
-  liv: { primary: '#C8102E', secondary: '#00B2A9', gk: '#2D3436' },
-  mci: { primary: '#6CABDD', secondary: '#1C2C5B', gk: '#E056FD' },
-  mun: { primary: '#DA291C', secondary: '#000000', gk: '#2ED573' },
-  new: { primary: '#241F20', secondary: '#FFFFFF', gk: '#3742FA' },
-  nfo: { primary: '#DD0000', secondary: '#FFFFFF', gk: '#FFA502' },
-  tot: { primary: '#132257', secondary: '#FFFFFF', gk: '#2ED573' },
-  sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
-};
-
-// Global App States
-let currentDisplayedSide = 'home'; // 'home' or 'away'
+let currentDisplayedSide = 'home';
 let autoSwitchTimer = null;
 let isAutoSwitchEnabled = true;
 
+// Match States
 let matchSeconds = 0;
 let timerInterval = null;
 let isTimerRunning = false;
 let homeScore = 0;
 let awayScore = 0;
 
-// High Definition Vector Jersey Generator
-function getJerseySVG(teamCode, isGK = false) {
-  const colors = TEAM_COLORS[teamCode] || { primary: '#2563EB', secondary: '#FFF', gk: '#10B981' };
-  const baseColor = isGK ? colors.gk : colors.primary;
-  const stripeColor = isGK ? '#00000033' : colors.secondary;
+// High-Accuracy Formation Tier Sorter by Player Tactical Roles
+function groupLineupByTacticalTiers(lineup) {
+  const tiers = {
+    ST: [],
+    AM: [],
+    DM: [],
+    DEF: [],
+    GK: []
+  };
 
-  return `
-    <svg class="jersey-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M30 18 L40 28 C45 32 55 32 60 28 L70 18 L88 34 L76 46 L72 38 L72 84 L28 84 L28 38 L24 46 L12 34 Z" fill="${baseColor}" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linejoin="round"/>
-      <path d="M42 26 C46 30 54 30 58 26" stroke="${stripeColor}" stroke-width="3" stroke-linecap="round"/>
-      <rect x="46" y="38" width="8" height="42" fill="${stripeColor}" opacity="0.85" rx="2" />
-    </svg>
-  `;
-}
+  lineup.forEach(player => {
+    const role = (player.role || '').toUpperCase();
+    const pos = (player.pos || '').toUpperCase();
 
-// Tactical Formation Tier Sorter
-function groupLineupByTiers(lineup) {
-  const tiers = { FWD: [], MID: [], DEF: [], GK: [] };
-  lineup.forEach(p => {
-    if (tiers[p.pos]) tiers[p.pos].push(p);
-    else tiers.MID.push(p);
+    if (pos === 'GK' || role === 'GK') {
+      tiers.GK.push(player);
+    } else if (pos === 'DEF' || ['LB', 'LCB', 'CB', 'RCB', 'RB', 'LWB', 'RWB'].includes(role)) {
+      tiers.DEF.push(player);
+    } else if (['LDM', 'RDM', 'CDM', 'LCM', 'RCM', 'CM'].includes(role)) {
+      tiers.DM.push(player);
+    } else if (['LAM', 'CAM', 'RAM', 'LM', 'RM'].includes(role)) {
+      tiers.AM.push(player);
+    } else if (pos === 'FWD' || ['ST', 'CF', 'LW', 'RW', 'LS', 'RS'].includes(role)) {
+      tiers.ST.push(player);
+    } else {
+      tiers.AM.push(player);
+    }
   });
+
   return tiers;
 }
 
-// Render Selected Team into the Right-Side Pitch
+// Generate Player Kit Image with Automatic Fallback
+function getJerseyImageHtml(teamCode, isGK = false) {
+  const folder = isGK ? CONFIG.gkJerseysPath : CONFIG.jerseysPath;
+  const kitUrl = `${folder}${teamCode}.png`;
+  const fallbackUrl = `${CONFIG.jerseysPath}${teamCode}.png`;
+
+  return `
+    <img src="${kitUrl}" 
+         alt="${teamCode} kit" 
+         class="real-kit-img" 
+         onerror="if(this.src!=='${fallbackUrl}'){this.src='${fallbackUrl}';}else{this.style.display='none';}" />
+  `;
+}
+
+// Render Team onto the Right Pitch Frame
 function displayTeamLineup(teamId, side = 'home') {
   const team = teamsData[String(teamId)] || Object.values(teamsData).find(t => String(t.teamId) === String(teamId));
   if (!team || !team.lineup) return;
 
   // Header Details
-  document.getElementById('displayTeamBadge').textContent = team.shortName;
+  document.getElementById('displayTeamLogo').src = `${CONFIG.clubsPath}${team.teamCode}.png`;
   document.getElementById('displayTeamName').textContent = team.teamName;
   document.getElementById('displayTeamStatus').textContent = side === 'home' ? 'HOME LINEUP' : 'AWAY LINEUP';
   document.getElementById('displayFormation').textContent = team.formation;
 
-  // Render Pitch Players
   const pitchEl = document.getElementById('pitchSurface');
   pitchEl.innerHTML = '';
 
-  const tiers = groupLineupByTiers(team.lineup);
-  const rows = ['FWD', 'MID', 'DEF', 'GK'];
+  const tacticalTiers = groupLineupByTacticalTiers(team.lineup);
+  const tierOrder = ['ST', 'AM', 'DM', 'DEF', 'GK'];
 
-  rows.forEach(tierKey => {
+  tierOrder.forEach(tierKey => {
+    const playersInTier = tacticalTiers[tierKey];
+    if (playersInTier.length === 0) return;
+
     const rowEl = document.createElement('div');
     rowEl.className = `pitch-row pitch-row-${tierKey.toLowerCase()}`;
 
-    tiers[tierKey].forEach(player => {
-      const isGK = player.pos === 'GK';
+    playersInTier.forEach(player => {
+      const isGK = player.pos === 'GK' || player.role === 'GK';
       const slot = document.createElement('div');
       slot.className = 'player-slot';
       slot.innerHTML = `
         <div class="jersey-icon-box">
-          ${getJerseySVG(team.teamCode, isGK)}
+          ${getJerseyImageHtml(team.teamCode, isGK)}
           <span class="role-tag">${player.role}</span>
         </div>
         <div class="name-plate">
@@ -207,7 +112,7 @@ function displayTeamLineup(teamId, side = 'home') {
   });
 }
 
-// Auto Switch Lineups Between Home & Away every 10 seconds
+// Auto Rotation (10 seconds switch)
 function startAutoRotation() {
   if (autoSwitchTimer) clearInterval(autoSwitchTimer);
   if (!isAutoSwitchEnabled) return;
@@ -223,10 +128,10 @@ function startAutoRotation() {
       currentDisplayedSide = 'home';
       displayTeamLineup(homeId, 'home');
     }
-  }, 10000); // 10 seconds interval
+  }, 10000);
 }
 
-// Update Scoreboard HUD at Bottom Center
+// Update Bottom Scoreboard HUD
 function updateBottomScoreboard() {
   const homeId = document.getElementById('homeSelect').value;
   const awayId = document.getElementById('awaySelect').value;
@@ -235,11 +140,11 @@ function updateBottomScoreboard() {
   const awayTeam = teamsData[String(awayId)];
 
   if (homeTeam) {
-    document.getElementById('hudHomeBadge').textContent = homeTeam.shortName;
+    document.getElementById('hudHomeLogo').src = `${CONFIG.clubsPath}${homeTeam.teamCode}.png`;
     document.getElementById('hudHomeName').textContent = homeTeam.teamName;
   }
   if (awayTeam) {
-    document.getElementById('hudAwayBadge').textContent = awayTeam.shortName;
+    document.getElementById('hudAwayLogo').src = `${CONFIG.clubsPath}${awayTeam.teamCode}.png`;
     document.getElementById('hudAwayName').textContent = awayTeam.teamName;
   }
 
@@ -249,7 +154,7 @@ function updateBottomScoreboard() {
   document.getElementById('hudAwayGoals').textContent = awayScore;
 }
 
-// Clock Utilities
+// Timer Functions
 function formatClock(totalSec) {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
@@ -308,7 +213,7 @@ function resetClock() {
   updateClockHUD();
 }
 
-// Bind User Interactions
+// User Action Handlers
 function setupEvents() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
@@ -323,13 +228,13 @@ function setupEvents() {
     if (currentDisplayedSide === 'away') displayTeamLineup(awaySelect.value, 'away');
   });
 
-  // Score Controls
+  // Score Buttons
   document.getElementById('btnHomeScoreAdd').addEventListener('click', () => { homeScore++; updateBottomScoreboard(); });
   document.getElementById('btnHomeScoreSub').addEventListener('click', () => { if (homeScore > 0) homeScore--; updateBottomScoreboard(); });
   document.getElementById('btnAwayScoreAdd').addEventListener('click', () => { awayScore++; updateBottomScoreboard(); });
   document.getElementById('btnAwayScoreSub').addEventListener('click', () => { if (awayScore > 0) awayScore--; updateBottomScoreboard(); });
 
-  // Clock Controls
+  // Clock Buttons
   document.getElementById('btnClockToggle').addEventListener('click', toggleClock);
   document.getElementById('btnClockReset').addEventListener('click', resetClock);
 
@@ -352,7 +257,7 @@ function setupEvents() {
     else clearInterval(autoSwitchTimer);
   });
 
-  // Toggle Streamer Dashboard Header
+  // Toggle Dashboard Header
   document.getElementById('btnHideControlBar').addEventListener('click', () => {
     document.getElementById('streamerDashboard').classList.toggle('hidden');
   });
@@ -364,7 +269,7 @@ function setupEvents() {
   }
 }
 
-// Populate UI Dropdowns
+// Populate Selectors from Data
 function initDropdowns() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
@@ -386,21 +291,19 @@ function initDropdowns() {
   startAutoRotation();
 }
 
-// App Bootstrapper
+// Init Application
 async function initApp() {
   setupEvents();
   updateClockHUD();
 
   try {
-    const res = await fetch('assets/data/custom-lineups.json');
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const res = await fetch(CONFIG.dataPath);
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
     teamsData = await res.json();
+    initDropdowns();
   } catch (err) {
-    console.warn('Network issue fetching JSON. Activating Embedded Registry:', err);
-    teamsData = FALLBACK_REGISTRY;
+    console.error('Failed to load lineup JSON:', err);
   }
-
-  initDropdowns();
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
