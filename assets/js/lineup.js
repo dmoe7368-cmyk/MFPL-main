@@ -1,8 +1,10 @@
 /**
- * Live Watch-Along Dual Lineup Engine
+ * Football Watch-Along Dual Lineup Engine
+ * Production Ready with Auto-Fallback & Pitch Layout
  */
 
 const CONFIG = {
+  // Relative path to JSON data from index.html
   dataPath: 'assets/data/custom-lineups.json',
   defaultHomeId: '1',  // Arsenal
   defaultAwayId: '6'   // Chelsea
@@ -10,7 +12,7 @@ const CONFIG = {
 
 let teamsData = {};
 
-// Color Palettes for Jersey Rendering (SVG Kit Themes)
+// Kit Jersey Palette Mapping
 const TEAM_COLORS = {
   ars: { primary: '#EF0107', secondary: '#FFFFFF', gk: '#00FF66' },
   avl: { primary: '#95BFE5', secondary: '#670E36', gk: '#FFE600' },
@@ -34,50 +36,43 @@ const TEAM_COLORS = {
   sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
 };
 
-// Generates scalable vector kit jersey with team styling
+// Scalable Vector Jersey Generator
 function getJerseySVG(teamCode, isGK = false) {
   const colors = TEAM_COLORS[teamCode] || { primary: '#2563EB', secondary: '#FFF', gk: '#10B981' };
   const baseColor = isGK ? colors.gk : colors.primary;
-  const stripeColor = isGK ? '#00000022' : colors.secondary;
+  const stripeColor = isGK ? '#00000033' : colors.secondary;
 
   return `
     <svg class="jersey-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M30 18 L40 28 C45 32 55 32 60 28 L70 18 L88 34 L76 46 L72 38 L72 84 L28 84 L28 38 L24 46 L12 34 Z" fill="${baseColor}" stroke="rgba(255,255,255,0.3)" stroke-width="2.5" stroke-linejoin="round"/>
+      <path d="M30 18 L40 28 C45 32 55 32 60 28 L70 18 L88 34 L76 46 L72 38 L72 84 L28 84 L28 38 L24 46 L12 34 Z" fill="${baseColor}" stroke="rgba(255,255,255,0.4)" stroke-width="2.5" stroke-linejoin="round"/>
       <path d="M42 26 C46 30 54 30 58 26" stroke="${stripeColor}" stroke-width="3" stroke-linecap="round"/>
-      <rect x="46" y="38" width="8" height="42" fill="${stripeColor}" opacity="0.8" rx="2" />
+      <rect x="46" y="38" width="8" height="42" fill="${stripeColor}" opacity="0.85" rx="2" />
     </svg>
   `;
 }
 
-// Groups 11 players into 4 pitch tiers: GK, DEF, MID, FWD
+// Tactical grouping for formation tiers
 function groupLineupByTiers(lineup) {
-  const tiers = {
-    FWD: [],
-    MID: [],
-    DEF: [],
-    GK: []
-  };
+  const tiers = { FWD: [], MID: [], DEF: [], GK: [] };
 
   lineup.forEach(player => {
     if (tiers[player.pos]) {
       tiers[player.pos].push(player);
     } else {
-      tiers.MID.push(player); // fallback
+      tiers.MID.push(player);
     }
   });
 
   return tiers;
 }
 
-// Renders team onto pitch grid
+// Render Team Board
 function renderTeam(teamId, type = 'home') {
   const team = teamsData[teamId];
   if (!team) return;
 
-  const isHome = type === 'home';
-  const prefix = isHome ? 'home' : 'away';
+  const prefix = type === 'home' ? 'home' : 'away';
 
-  // Update Headers
   document.getElementById(`${prefix}Name`).textContent = team.teamName;
   document.getElementById(`${prefix}Badge`).textContent = team.shortName;
   document.getElementById(`${prefix}Formation`).textContent = team.formation;
@@ -86,8 +81,6 @@ function renderTeam(teamId, type = 'home') {
   pitchEl.innerHTML = '';
 
   const tiers = groupLineupByTiers(team.lineup);
-
-  // Tactical Pitch Layout (Attackers at top, GK at bottom)
   const rowsOrder = ['FWD', 'MID', 'DEF', 'GK'];
 
   rowsOrder.forEach(tierKey => {
@@ -114,8 +107,8 @@ function renderTeam(teamId, type = 'home') {
   });
 }
 
-// Populate Dropdown Menus
-function populateSelectors() {
+// Initialize Selectors and URL Query Logic
+function setupUI() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
 
@@ -125,12 +118,11 @@ function populateSelectors() {
   Object.values(teamsData).forEach(team => {
     const optHome = new Option(`${team.teamName} (${team.formation})`, team.teamId);
     const optAway = new Option(`${team.teamName} (${team.formation})`, team.teamId);
-
     homeSelect.add(optHome);
     awaySelect.add(optAway);
   });
 
-  // Check URL query parameters for dynamic OBS scenes (?home=1&away=6)
+  // URL parameters support: ?home=1&away=6&controls=false
   const params = new URLSearchParams(window.location.search);
   const homeParam = params.get('home') || CONFIG.defaultHomeId;
   const awayParam = params.get('away') || CONFIG.defaultAwayId;
@@ -154,17 +146,15 @@ function populateSelectors() {
   renderTeam(awaySelect.value, 'away');
 }
 
-// Initialize application
+// Data Fetching
 async function initApp() {
   try {
-    const response = await fetch(CONFIG.dataPath);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-    teamsData = await response.json();
-    populateSelectors();
-  } catch (error) {
-    console.error('Lineup JSON loading failed:', error);
+    const res = await fetch(CONFIG.dataPath);
+    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+    teamsData = await res.json();
+    setupUI();
+  } catch (err) {
+    console.error('Error loading lineup JSON:', err);
   }
 }
 
