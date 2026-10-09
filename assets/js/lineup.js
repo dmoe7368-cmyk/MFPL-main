@@ -1,6 +1,7 @@
 /**
  * Watch-Along Live Broadcast Engine
- * Clean Production Build: Zero Syntax Errors, Flawless 10s Auto-Rotation & 5-Tier Formation
+ * Clean Production Build: Native DOM Image Handling (Zero Syntax Leaks), 
+ * 10s Auto-Rotation & 5-Tier Tactical Alignment
  */
 
 const CONFIG = {
@@ -22,7 +23,7 @@ let isTimerRunning = false;
 let homeScore = 0;
 let awayScore = 0;
 
-// Kit Color Palette for Dynamic SVG Fallback
+// High-Contrast SVG Kit Fallback
 const TEAM_COLORS = {
   ars: { primary: '#EF0107', secondary: '#FFFFFF', gk: '#00FF66' },
   avl: { primary: '#95BFE5', secondary: '#670E36', gk: '#FFE600' },
@@ -46,7 +47,7 @@ const TEAM_COLORS = {
   sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
 };
 
-// 5-Tier Tactical Formation Sorter (FWD -> AM -> DM -> DEF -> GK)
+// 5-Tier Tactical Formation Tier Sorter
 function groupLineupByTier(lineup) {
   const tiers = {
     FWD: [],
@@ -88,17 +89,29 @@ function getFallbackJerseySVG(teamCode, isGK = false) {
   return `data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M30 18 L40 28 C45 32 55 32 60 28 L70 18 L88 34 L76 46 L72 38 L72 84 L28 84 L28 38 L24 46 L12 34 Z" fill="${encodeURIComponent(baseColor)}" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/><path d="M42 26 C46 30 54 30 58 26" stroke="${encodeURIComponent(stripeColor)}" stroke-width="3"/><rect x="46" y="38" width="8" height="42" fill="${encodeURIComponent(stripeColor)}" opacity="0.85" rx="2"/></svg>`;
 }
 
-// Clean Kit Image Tag without Stray Characters
-function getPlayerKitHtml(teamCode, isGK = false) {
-  const kitFolder = isGK ? CONFIG.gkKitPath : CONFIG.outfieldKitPath;
-  const kitUrl = `${kitFolder}${teamCode}.png`;
-  const fallbackOutfield = `${CONFIG.outfieldKitPath}${teamCode}.png`;
-  const fallbackSvg = getFallbackJerseySVG(teamCode, isGK);
+// Pure DOM Image Generator: string concatenation လုံးဝမသုံးဘဲ တိုက်ရိုက် create လုပ်သည်
+function createPlayerKitElement(teamCode, isGK = false) {
+  const img = document.createElement('img');
+  img.className = 'real-kit-img';
+  img.alt = teamCode;
 
-  return `<img src="${kitUrl}" alt="${teamCode}" class="real-kit-img" onerror="if(this.src!=='${fallbackOutfield}'){this.src='${fallbackOutfield}';}else{this.onerror=null;this.src='${fallbackSvg}';}">`;
+  const primaryKit = `${isGK ? CONFIG.gkKitPath : CONFIG.outfieldKitPath}${teamCode}.png`;
+  const fallbackOutfield = `${CONFIG.outfieldKitPath}${teamCode}.png`;
+
+  img.src = primaryKit;
+  img.onerror = function() {
+    if (this.src !== fallbackOutfield) {
+      this.src = fallbackOutfield;
+    } else {
+      this.onerror = null;
+      this.src = getFallbackJerseySVG(teamCode, isGK);
+    }
+  };
+
+  return img;
 }
 
-// Render Team Lineup into Pitch Surface
+// Render Team into Tactical Pitch Frame
 function displayTeamLineup(teamId, side = 'home') {
   const team = teamsData[String(teamId)] || Object.values(teamsData).find(t => String(t.teamId) === String(teamId));
   if (!team || !team.lineup) return;
@@ -122,7 +135,7 @@ function displayTeamLineup(teamId, side = 'home') {
   const formEl = document.getElementById('displayFormation');
   if (formEl) formEl.textContent = team.formation;
 
-  // Pitch Players Rendering
+  // Pitch Field Rendering
   const pitchEl = document.getElementById('pitchSurface');
   if (!pitchEl) return;
   pitchEl.innerHTML = '';
@@ -142,15 +155,29 @@ function displayTeamLineup(teamId, side = 'home') {
       const slot = document.createElement('div');
       slot.className = 'player-slot';
 
-      // Clean Strict DOM construction: No unescaped arrows or stray text
+      // 1. Jersey Box
       const jerseyBox = document.createElement('div');
       jerseyBox.className = 'jersey-icon-box';
-      jerseyBox.innerHTML = `${getPlayerKitHtml(team.teamCode, isGK)}<span class="role-tag">${player.role}</span>`;
+      
+      const kitImg = createPlayerKitElement(team.teamCode, isGK);
+      const roleTag = document.createElement('span');
+      roleTag.className = 'role-tag';
+      roleTag.textContent = player.role;
 
+      jerseyBox.appendChild(kitImg);
+      jerseyBox.appendChild(roleTag);
+
+      // 2. Name Plate
       const namePlate = document.createElement('div');
       namePlate.className = 'name-plate';
-      namePlate.innerHTML = `<span class="player-name-text">${player.name}</span>`;
+      
+      const nameText = document.createElement('span');
+      nameText.className = 'player-name-text';
+      nameText.textContent = player.name;
 
+      namePlate.appendChild(nameText);
+
+      // Assemble Slot
       slot.appendChild(jerseyBox);
       slot.appendChild(namePlate);
       rowEl.appendChild(slot);
@@ -166,7 +193,7 @@ function startAutoRotation() {
     clearInterval(autoSwitchTimer);
     autoSwitchTimer = null;
   }
-
+  
   if (!isAutoSwitchEnabled) return;
 
   autoSwitchTimer = setInterval(() => {
@@ -182,7 +209,7 @@ function startAutoRotation() {
   }, 10000);
 }
 
-// Update Bottom Scoreboard HUD
+// Update Scoreboard HUD at Bottom Center
 function updateBottomScoreboard() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
@@ -288,7 +315,7 @@ function resetClock() {
   updateClockHUD();
 }
 
-// User Action Handlers
+// Event Bindings
 function setupEvents() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
@@ -309,7 +336,7 @@ function setupEvents() {
     });
   }
 
-  // Score Steppers
+  // Score Controls
   document.getElementById('btnHomeScoreAdd')?.addEventListener('click', () => { homeScore++; updateBottomScoreboard(); });
   document.getElementById('btnHomeScoreSub')?.addEventListener('click', () => { if (homeScore > 0) homeScore--; updateBottomScoreboard(); });
   document.getElementById('btnAwayScoreAdd')?.addEventListener('click', () => { awayScore++; updateBottomScoreboard(); });
