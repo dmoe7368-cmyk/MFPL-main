@@ -1,11 +1,10 @@
 /* ==========================================================================
-   WATCH-ALONG BROADCAST OVERLAY SYSTEM
+   PRODUCTION SPORTS UI & OBS OVERLAY STYLESHEET
    ========================================================================== */
 
 :root {
   --primary-accent: #2563EB;
   --gold-accent: #F59E0B;
-  --success-color: #22C55E;
   --glass-hud-bg: rgba(10, 15, 29, 0.88);
   --border-glass: rgba(255, 255, 255, 0.16);
   --pitch-surface: radial-gradient(circle at center, rgba(16, 44, 28, 0.96) 0%, rgba(6, 21, 13, 0.99) 100%);
@@ -77,6 +76,7 @@ select {
   font-size: 0.82rem;
   font-weight: 600;
   outline: none;
+  cursor: pointer;
 }
 
 .score-adjust {
@@ -151,9 +151,7 @@ select {
   border-color: #22C55E;
 }
 
-/* ==========================================================================
-   BROADCAST VIEWPORT (LEFT CAM + RIGHT LINEUP)
-   ========================================================================== */
+/* Broadcast Grid Viewport */
 .broadcast-viewport {
   position: absolute;
   top: 52px;
@@ -166,13 +164,11 @@ select {
   padding: 16px 28px 10px 28px;
 }
 
-/* Left side transparent for Streamer Camera */
 .streamer-cam-zone {
   background: transparent !important;
   pointer-events: none;
 }
 
-/* Right side Lineup Tactical Card */
 .tactical-hud-zone {
   display: flex;
   flex-direction: column;
@@ -190,7 +186,6 @@ select {
   display: flex;
   flex-direction: column;
   padding: 14px 16px;
-  position: relative;
   overflow: hidden;
 }
 
@@ -208,20 +203,22 @@ select {
   gap: 12px;
 }
 
-.team-logo-pill {
-  width: 42px;
-  height: 42px;
-  background: linear-gradient(135deg, #1E293B, #0F172A);
-  border: 1.5px solid rgba(255, 255, 255, 0.3);
+.logo-box {
+  width: 44px;
+  height: 44px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--border-glass);
   border-radius: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-family: var(--font-broadcast);
-  font-size: 1.45rem;
-  font-weight: 700;
-  color: var(--gold-accent);
-  letter-spacing: 1px;
+  padding: 4px;
+}
+
+.team-club-logo {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
 }
 
 .team-heading {
@@ -263,7 +260,6 @@ select {
   overflow: hidden;
 }
 
-/* Pitch Tactical Markings */
 .pitch-container::before {
   content: "";
   position: absolute;
@@ -292,7 +288,7 @@ select {
   z-index: 2;
 }
 
-/* Player Badge & Jersey */
+/* Player Badge & Real Kit Image */
 .player-slot {
   display: flex;
   flex-direction: column;
@@ -303,14 +299,15 @@ select {
 
 .jersey-icon-box {
   position: relative;
-  width: 38px;
-  height: 38px;
+  width: 42px;
+  height: 42px;
   filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.6));
 }
 
-.jersey-svg {
+.real-kit-img {
   width: 100%;
   height: 100%;
+  object-fit: contain;
 }
 
 .role-tag {
@@ -321,7 +318,7 @@ select {
   background: #020617;
   color: #F8FAFC;
   border: 1px solid var(--border-glass);
-  padding: 1px 3px;
+  padding: 1px 4px;
   border-radius: 3px;
   font-weight: 800;
 }
@@ -330,7 +327,7 @@ select {
   margin-top: 3px;
   background: rgba(0, 0, 0, 0.88);
   border: 1px solid rgba(255, 255, 255, 0.16);
-  padding: 1px 5px;
+  padding: 1px 6px;
   border-radius: 5px;
   backdrop-filter: blur(4px);
 }
@@ -342,9 +339,7 @@ select {
   white-space: nowrap;
 }
 
-/* ==========================================================================
-   BOTTOM CENTER LIVE SCOREBOARD & CLOCK HUD
-   ========================================================================== */
+/* Bottom Center Scoreboard HUD */
 .bottom-scoreboard-center {
   position: absolute;
   bottom: 12px;
@@ -357,7 +352,7 @@ select {
   border-radius: 16px;
   backdrop-filter: blur(20px);
   -webkit-backdrop-filter: blur(20px);
-  padding: 6px 16px;
+  padding: 6px 18px;
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.7);
   z-index: 100;
 }
@@ -366,15 +361,13 @@ select {
   display: flex;
   align-items: center;
   gap: 12px;
-  padding: 0 14px;
+  padding: 0 12px;
 }
 
-.hud-team-badge {
-  font-family: var(--font-broadcast);
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--gold-accent);
-  letter-spacing: 1px;
+.hud-mini-logo {
+  width: 28px;
+  height: 28px;
+  object-fit: contain;
 }
 
 .hud-team-name {
@@ -419,12 +412,6 @@ select {
 }
 
 @keyframes playerIn {
-  from {
-    opacity: 0;
-    transform: translateY(6px) scale(0.92);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
+  from { opacity: 0; transform: translateY(6px) scale(0.92); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
 }
