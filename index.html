@@ -3,107 +3,108 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Live Watch-Along Dual Lineups & Match HUD</title>
+  <title>Watch-Along Live Broadcast Overlay</title>
 
-  <!-- Google Fonts: Display & UI -->
+  <!-- Typography -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css">
 </head>
-<body class="obs-transparent">
+<body class="obs-transparent-layer">
 
-  <!-- Streamer Match Control Bar -->
-  <header class="controller-hub" id="controllerHub">
-    <!-- Home Team Selection & Goals -->
-    <div class="control-unit">
-      <label for="homeTeamSelect">Home Team</label>
-      <select id="homeTeamSelect" aria-label="Select Home Team"></select>
-      <div class="score-stepper">
-        <button type="button" id="homeScoreMinus" aria-label="Decrease Home Score">-</button>
-        <span class="stepper-val" id="ctrlHomeScore">0</span>
-        <button type="button" id="homeScorePlus" aria-label="Increase Home Score">+</button>
+  <!-- Streamer Top Operation Dashboard (Hideable) -->
+  <header class="streamer-dashboard" id="streamerDashboard">
+    <div class="dash-block">
+      <label for="homeSelect">Home</label>
+      <select id="homeSelect" aria-label="Home Team"></select>
+      <div class="score-adjust">
+        <button type="button" id="btnHomeScoreSub">-</button>
+        <span id="ctrlHomeScore">0</span>
+        <button type="button" id="btnHomeScoreAdd">+</button>
       </div>
     </div>
 
-    <!-- Match Timer Dashboard Controller -->
-    <div class="timer-control-unit">
-      <div class="timer-inputs">
-        <input type="number" id="manualMin" min="0" max="130" value="0" aria-label="Minutes">
-        <span>:</span>
-        <input type="number" id="manualSec" min="0" max="59" value="00" aria-label="Seconds">
-      </div>
-      <div class="timer-buttons">
-        <button type="button" id="timerStartBtn" class="btn-action">Start</button>
-        <button type="button" id="timerResetBtn" class="btn-action btn-secondary">Reset</button>
+    <!-- Match Clock Editor -->
+    <div class="dash-block timer-hub">
+      <input type="number" id="inputClockMin" min="0" max="130" value="0" aria-label="Minutes">
+      <span>:</span>
+      <input type="number" id="inputClockSec" min="0" max="59" value="00" aria-label="Seconds">
+      <button type="button" id="btnClockToggle" class="btn-primary">Start</button>
+      <button type="button" id="btnClockReset" class="btn-secondary">Reset</button>
+    </div>
+
+    <div class="dash-block">
+      <label for="awaySelect">Away</label>
+      <select id="awaySelect" aria-label="Away Team"></select>
+      <div class="score-adjust">
+        <button type="button" id="btnAwayScoreSub">-</button>
+        <span id="ctrlAwayScore">0</span>
+        <button type="button" id="btnAwayScoreAdd">+</button>
       </div>
     </div>
 
-    <!-- Away Team Selection & Goals -->
-    <div class="control-unit">
-      <label for="awayTeamSelect">Away Team</label>
-      <select id="awayTeamSelect" aria-label="Select Away Team"></select>
-      <div class="score-stepper">
-        <button type="button" id="awayScoreMinus" aria-label="Decrease Away Score">-</button>
-        <span class="stepper-val" id="ctrlAwayScore">0</span>
-        <button type="button" id="awayScorePlus" aria-label="Increase Away Score">+</button>
-      </div>
+    <div class="dash-block">
+      <button type="button" id="btnAutoSwitchToggle" class="btn-toggle active">Auto: ON (10s)</button>
+      <button type="button" id="btnHideControlBar" class="btn-toggle">Hide Controls</button>
     </div>
-
-    <button type="button" id="toggleHudBtn" class="btn-toggle">Hide Controls</button>
   </header>
 
-  <!-- Live Broadcast HUD Scoreboard -->
-  <section class="live-scoreboard-bar">
-    <div class="sb-team sb-home">
-      <span class="sb-badge" id="hudHomeBadge">ARS</span>
-      <span class="sb-name" id="hudHomeName">Arsenal</span>
-      <span class="sb-score" id="hudHomeScore">0</span>
-    </div>
+  <!-- Main Broadcast Canvas -->
+  <div class="broadcast-viewport">
+    
+    <!-- LEFT SIDE: Streamer Facecam / Virtual Studio Area (100% Alpha Transparent) -->
+    <section class="streamer-cam-zone" aria-label="Streamer Cam Space">
+      <!-- Transparent View: Streamer Camera will show from OBS layer below -->
+    </section>
 
-    <div class="sb-clock-center">
-      <div class="clock-display" id="hudClock">00:00</div>
-      <div class="match-status-badge" id="hudMatchHalf">1ST HALF</div>
-    </div>
-
-    <div class="sb-team sb-away">
-      <span class="sb-score" id="hudAwayScore">0</span>
-      <span class="sb-name" id="hudAwayName">Chelsea</span>
-      <span class="sb-badge" id="hudAwayBadge">CHE</span>
-    </div>
-  </section>
-
-  <!-- Dual Tactical Pitch Area -->
-  <main class="arena-grid">
-    <!-- Home Team Card -->
-    <article class="tactical-card" id="homeCard">
-      <div class="card-meta">
-        <div class="card-meta-title">
-          <span class="meta-badge" id="cardHomeBadge">ARS</span>
-          <span class="meta-name" id="cardHomeName">Arsenal</span>
+    <!-- RIGHT SIDE: Single Auto-Switching Tactical Pitch Frame -->
+    <aside class="tactical-hud-zone" aria-label="Tactical Lineup Frame">
+      <div class="lineup-frame-card">
+        <!-- Team Card Header -->
+        <div class="frame-header">
+          <div class="team-title-wrap">
+            <span class="team-logo-pill" id="displayTeamBadge">ARS</span>
+            <div>
+              <h2 class="team-heading" id="displayTeamName">Arsenal</h2>
+              <span class="team-side-indicator" id="displayTeamStatus">HOME LINEUP</span>
+            </div>
+          </div>
+          <div class="formation-badge" id="displayFormation">4-2-3-1</div>
         </div>
-        <span class="meta-formation" id="cardHomeFormation">4-2-3-1</span>
-      </div>
-      <div class="tactical-pitch" id="homePitchSurface">
-        <!-- Players loaded via lineup.js -->
-      </div>
-    </article>
 
-    <!-- Away Team Card -->
-    <article class="tactical-card" id="awayCard">
-      <div class="card-meta">
-        <div class="card-meta-title">
-          <span class="meta-badge" id="cardAwayBadge">CHE</span>
-          <span class="meta-name" id="cardAwayName">Chelsea</span>
+        <!-- Pitch Visualizer -->
+        <div class="pitch-container" id="pitchSurface">
+          <!-- Players & Jerseys injected here via lineup.js -->
         </div>
-        <span class="meta-formation" id="cardAwayFormation">3-4-2-1</span>
       </div>
-      <div class="tactical-pitch" id="awayPitchSurface">
-        <!-- Players loaded via lineup.js -->
-      </div>
-    </article>
-  </main>
+    </aside>
+
+  </div>
+
+  <!-- BOTTOM CENTER: Live Match Goals & Minutes HUD -->
+  <footer class="bottom-scoreboard-center" id="liveScoreboardHud">
+    <!-- Home Mini Score -->
+    <div class="score-team-cell home-cell">
+      <span class="hud-team-badge" id="hudHomeBadge">ARS</span>
+      <span class="hud-team-name" id="hudHomeName">Arsenal</span>
+      <span class="hud-goal-number" id="hudHomeGoals">0</span>
+    </div>
+
+    <!-- Center Clock & Half Indicator -->
+    <div class="score-clock-cell">
+      <div class="hud-time-val" id="hudMatchClock">00:00</div>
+      <div class="hud-period" id="hudMatchPeriod">1ST HALF</div>
+    </div>
+
+    <!-- Away Mini Score -->
+    <div class="score-team-cell away-cell">
+      <span class="hud-goal-number" id="hudAwayGoals">0</span>
+      <span class="hud-team-name" id="hudAwayName">Chelsea</span>
+      <span class="hud-team-badge" id="hudAwayBadge">CHE</span>
+    </div>
+  </footer>
 
   <script src="assets/js/lineup.js"></script>
 </body>
