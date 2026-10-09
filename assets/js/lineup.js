@@ -1,10 +1,9 @@
 /**
- * Football Watch-Along Dual Lineup Engine
- * Production Ready with Auto-Fallback & Pitch Layout
+ * Live Watch-Along Dual Lineup Engine
+ * Fetches JSON directly by teamId and renders players, jerseys, scoreboard, and timer
  */
 
 const CONFIG = {
-  // Relative path to JSON data from index.html
   dataPath: 'assets/data/custom-lineups.json',
   defaultHomeId: '1',  // Arsenal
   defaultAwayId: '6'   // Chelsea
@@ -12,7 +11,7 @@ const CONFIG = {
 
 let teamsData = {};
 
-// Kit Jersey Palette Mapping
+// Kit themes (Primary, Secondary, Goalkeeper)
 const TEAM_COLORS = {
   ars: { primary: '#EF0107', secondary: '#FFFFFF', gk: '#00FF66' },
   avl: { primary: '#95BFE5', secondary: '#670E36', gk: '#FFE600' },
@@ -36,7 +35,14 @@ const TEAM_COLORS = {
   sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
 };
 
-// Scalable Vector Jersey Generator
+// Match State
+let matchSeconds = 0;
+let timerInterval = null;
+let isTimerRunning = false;
+let homeScore = 0;
+let awayScore = 0;
+
+// High-Definition Vector Jersey SVG
 function getJerseySVG(teamCode, isGK = false) {
   const colors = TEAM_COLORS[teamCode] || { primary: '#2563EB', secondary: '#FFF', gk: '#10B981' };
   const baseColor = isGK ? colors.gk : colors.primary;
@@ -51,39 +57,45 @@ function getJerseySVG(teamCode, isGK = false) {
   `;
 }
 
-// Tactical grouping for formation tiers
+// Tactical Formation Tier Sorter (FWD -> MID -> DEF -> GK)
 function groupLineupByTiers(lineup) {
   const tiers = { FWD: [], MID: [], DEF: [], GK: [] };
-
-  lineup.forEach(player => {
-    if (tiers[player.pos]) {
-      tiers[player.pos].push(player);
+  lineup.forEach(p => {
+    if (tiers[p.pos]) {
+      tiers[p.pos].push(p);
     } else {
-      tiers.MID.push(player);
+      tiers.MID.push(p);
     }
   });
-
   return tiers;
 }
 
-// Render Team Board
+// Render Team by ID
 function renderTeam(teamId, type = 'home') {
-  const team = teamsData[teamId];
-  if (!team) return;
+  // Key string သို့မဟုတ် number နှစ်မျိုးစလုံး ရှာဖွေနိုင်အောင် handle လုပ်ထားသည်
+  const team = teamsData[String(teamId)] || Object.values(teamsData).find(t => String(t.teamId) === String(teamId));
+  if (!team || !team.lineup) return;
 
-  const prefix = type === 'home' ? 'home' : 'away';
+  const isHome = type === 'home';
+  const prefix = isHome ? 'home' : 'away';
 
-  document.getElementById(`${prefix}Name`).textContent = team.teamName;
-  document.getElementById(`${prefix}Badge`).textContent = team.shortName;
-  document.getElementById(`${prefix}Formation`).textContent = team.formation;
+  // 1. Update Scoreboard HUD
+  document.getElementById(`hud${isHome ? 'Home' : 'Away'}Badge`).textContent = team.shortName;
+  document.getElementById(`hud${isHome ? 'Home' : 'Away'}Name`).textContent = team.teamName;
 
-  const pitchEl = document.getElementById(`${prefix}Pitch`);
+  // 2. Update Card Meta Header
+  document.getElementById(`card${isHome ? 'Home' : 'Away'}Badge`).textContent = team.shortName;
+  document.getElementById(`card${isHome ? 'Home' : 'Away'}Name`).textContent = team.teamName;
+  document.getElementById(`card${isHome ? 'Home' : 'Away'}Formation`).textContent = team.formation;
+
+  // 3. Render Pitch Players
+  const pitchEl = document.getElementById(`${prefix}PitchSurface`);
   pitchEl.innerHTML = '';
 
   const tiers = groupLineupByTiers(team.lineup);
-  const rowsOrder = ['FWD', 'MID', 'DEF', 'GK'];
+  const rows = ['FWD', 'MID', 'DEF', 'GK'];
 
-  rowsOrder.forEach(tierKey => {
+  rows.forEach(tierKey => {
     const rowEl = document.createElement('div');
     rowEl.className = `pitch-row pitch-row-${tierKey.toLowerCase()}`;
 
@@ -92,12 +104,12 @@ function renderTeam(teamId, type = 'home') {
       const slot = document.createElement('div');
       slot.className = 'player-slot';
       slot.innerHTML = `
-        <div class="jersey-icon-wrap">
+        <div class="jersey-box">
           ${getJerseySVG(team.teamCode, isGK)}
-          <span class="player-role-badge">${player.role}</span>
+          <span class="role-tag">${player.role}</span>
         </div>
-        <div class="player-meta">
-          <span class="player-name">${player.name}</span>
+        <div class="name-plate">
+          <span class="player-name-text">${player.name}</span>
         </div>
       `;
       rowEl.appendChild(slot);
@@ -107,54 +119,150 @@ function renderTeam(teamId, type = 'home') {
   });
 }
 
-// Initialize Selectors and URL Query Logic
-function setupUI() {
-  const homeSelect = document.getElementById('homeSelect');
-  const awaySelect = document.getElementById('awaySelect');
+// Score Management
+function updateScores() {
+  document.getElementById('ctrlHomeScore').textContent = homeScore;
+  document.getElementById('hudHomeScore').textContent = homeScore;
+  document.getElementById('ctrlAwayScore').textContent = awayScore;
+  document.getElementById('hudAwayScore').textContent = awayScore;
+}
 
-  homeSelect.innerHTML = '';
-  awaySelect.innerHTML = '';
+// Match Timer Logic
+function formatTimer(totalSec) {
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
 
-  Object.values(teamsData).forEach(team => {
-    const optHome = new Option(`${team.teamName} (${team.formation})`, team.teamId);
-    const optAway = new Option(`${team.teamName} (${team.formation})`, team.teamId);
-    homeSelect.add(optHome);
-    awaySelect.add(optAway);
-  });
+function updateTimerDisplay() {
+  const formatted = formatTimer(matchSeconds);
+  document.getElementById('hudClock').textContent = formatted;
 
-  // URL parameters support: ?home=1&away=6&controls=false
-  const params = new URLSearchParams(window.location.search);
-  const homeParam = params.get('home') || CONFIG.defaultHomeId;
-  const awayParam = params.get('away') || CONFIG.defaultAwayId;
-  const hideControls = params.get('controls') === 'false';
-
-  homeSelect.value = homeParam;
-  awaySelect.value = awayParam;
-
-  if (hideControls) {
-    document.getElementById('controllerBar').classList.add('hidden');
+  const halfBadge = document.getElementById('hudMatchHalf');
+  if (matchSeconds >= 2700 && matchSeconds < 5400) {
+    halfBadge.textContent = '2ND HALF';
+  } else if (matchSeconds >= 5400) {
+    halfBadge.textContent = 'EXTRA TIME / FT';
+  } else {
+    halfBadge.textContent = '1ST HALF';
   }
+}
+
+function toggleTimer() {
+  const startBtn = document.getElementById('timerStartBtn');
+  if (isTimerRunning) {
+    clearInterval(timerInterval);
+    isTimerRunning = false;
+    startBtn.textContent = 'Start';
+    startBtn.classList.remove('btn-secondary');
+  } else {
+    const inputM = parseInt(document.getElementById('manualMin').value) || 0;
+    const inputS = parseInt(document.getElementById('manualSec').value) || 0;
+
+    if (matchSeconds === 0 && (inputM > 0 || inputS > 0)) {
+      matchSeconds = (inputM * 60) + inputS;
+    }
+
+    timerInterval = setInterval(() => {
+      matchSeconds++;
+      updateTimerDisplay();
+      document.getElementById('manualMin').value = Math.floor(matchSeconds / 60);
+      document.getElementById('manualSec').value = matchSeconds % 60;
+    }, 1000);
+
+    isTimerRunning = true;
+    startBtn.textContent = 'Pause';
+    startBtn.classList.add('btn-secondary');
+  }
+}
+
+function resetTimer() {
+  clearInterval(timerInterval);
+  isTimerRunning = false;
+  matchSeconds = 0;
+  document.getElementById('manualMin').value = 0;
+  document.getElementById('manualSec').value = 0;
+  document.getElementById('timerStartBtn').textContent = 'Start';
+  document.getElementById('timerStartBtn').classList.remove('btn-secondary');
+  updateTimerDisplay();
+}
+
+// UI Event Handlers
+function setupEventHandlers() {
+  const homeSelect = document.getElementById('homeTeamSelect');
+  const awaySelect = document.getElementById('awayTeamSelect');
 
   homeSelect.addEventListener('change', (e) => renderTeam(e.target.value, 'home'));
   awaySelect.addEventListener('change', (e) => renderTeam(e.target.value, 'away'));
 
-  document.getElementById('toggleControlsBtn').addEventListener('click', () => {
-    document.getElementById('controllerBar').classList.toggle('hidden');
+  // Score Steppers
+  document.getElementById('homeScorePlus').addEventListener('click', () => { homeScore++; updateScores(); });
+  document.getElementById('homeScoreMinus').addEventListener('click', () => { if (homeScore > 0) homeScore--; updateScores(); });
+  document.getElementById('awayScorePlus').addEventListener('click', () => { awayScore++; updateScores(); });
+  document.getElementById('awayScoreMinus').addEventListener('click', () => { if (awayScore > 0) awayScore--; updateScores(); });
+
+  // Timer Buttons
+  document.getElementById('timerStartBtn').addEventListener('click', toggleTimer);
+  document.getElementById('timerResetBtn').addEventListener('click', resetTimer);
+
+  document.getElementById('manualMin').addEventListener('change', (e) => {
+    matchSeconds = (parseInt(e.target.value) || 0) * 60 + (parseInt(document.getElementById('manualSec').value) || 0);
+    updateTimerDisplay();
+  });
+  document.getElementById('manualSec').addEventListener('change', (e) => {
+    matchSeconds = (parseInt(document.getElementById('manualMin').value) || 0) * 60 + (parseInt(e.target.value) || 0);
+    updateTimerDisplay();
   });
 
-  renderTeam(homeSelect.value, 'home');
-  renderTeam(awaySelect.value, 'away');
+  // Toggle Streamer Controls
+  document.getElementById('toggleHudBtn').addEventListener('click', () => {
+    document.getElementById('controllerHub').classList.toggle('hidden');
+  });
+
+  // URL Parameter check (?controls=false)
+  const params = new URLSearchParams(window.location.search);
+  if (params.get('controls') === 'false') {
+    document.getElementById('controllerHub').classList.add('hidden');
+  }
 }
 
-// Data Fetching
+// Populate Selectors from Data
+function populateUI() {
+  const homeSelect = document.getElementById('homeTeamSelect');
+  const awaySelect = document.getElementById('awayTeamSelect');
+
+  homeSelect.innerHTML = '';
+  awaySelect.innerHTML = '';
+
+  Object.entries(teamsData).forEach(([key, team]) => {
+    homeSelect.add(new Option(`${team.teamName} (${team.formation})`, key));
+    awaySelect.add(new Option(`${team.teamName} (${team.formation})`, key));
+  });
+
+  const params = new URLSearchParams(window.location.search);
+  const initialHome = params.get('home') || CONFIG.defaultHomeId;
+  const initialAway = params.get('away') || CONFIG.defaultAwayId;
+
+  homeSelect.value = initialHome;
+  awaySelect.value = initialAway;
+
+  renderTeam(initialHome, 'home');
+  renderTeam(initialAway, 'away');
+}
+
+// Fetch JSON Engine
 async function initApp() {
+  setupEventHandlers();
+  updateScores();
+  updateTimerDisplay();
+
   try {
     const res = await fetch(CONFIG.dataPath);
-    if (!res.ok) throw new Error(`HTTP Error: ${res.status}`);
+    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
     teamsData = await res.json();
-    setupUI();
+    populateUI();
   } catch (err) {
-    console.error('Error loading lineup JSON:', err);
+    console.error('Lineup JSON loading failed:', err);
   }
 }
 
