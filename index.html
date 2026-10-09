@@ -10,11 +10,12 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
 
+  <!-- Root Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="obs-transparent-layer">
 
-  <!-- Streamer Operational Dashboard (Hideable) -->
+  <!-- Streamer Operational Dashboard (Can be hidden during live stream) -->
   <header class="streamer-dashboard" id="streamerDashboard">
     <div class="dash-block">
       <label for="homeSelect">Home</label>
@@ -51,18 +52,18 @@
     </div>
   </header>
 
-  <!-- Broadcast Stage -->
+  <!-- Broadcast Stage Layout -->
   <div class="broadcast-viewport">
     
-    <!-- LEFT SIDE: Streamer Facecam Area (Transparent for OBS) -->
+    <!-- LEFT SIDE: Streamer Facecam / Virtual Studio Area (100% Alpha Transparent) -->
     <section class="streamer-cam-zone" aria-label="Streamer Cam Space">
-      <!-- Empty transparent space for live camera feed below -->
+      <!-- Empty transparent space for live camera feed below in OBS -->
     </section>
 
     <!-- RIGHT SIDE: Single Auto-Switching Tactical Pitch Frame -->
     <aside class="tactical-hud-zone" aria-label="Tactical Lineup Frame">
       <div class="lineup-frame-card">
-        <!-- Team Card Header with Real Logo Image -->
+        <!-- Team Card Header with Real Club Logo -->
         <div class="frame-header">
           <div class="team-title-wrap">
             <div class="logo-box">
@@ -76,7 +77,7 @@
           <div class="formation-badge" id="displayFormation">4-2-3-1</div>
         </div>
 
-        <!-- Pitch Visualizer -->
+        <!-- Tactical Pitch Field -->
         <div class="pitch-container" id="pitchSurface">
           <!-- Tactical tiers injected via lineup.js -->
         </div>
