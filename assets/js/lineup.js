@@ -1,12 +1,106 @@
 /**
- * Live Watch-Along Dual Lineup Engine
- * Fetches JSON directly by teamId and renders players, jerseys, scoreboard, and timer
+ * Watch-Along Live Broadcast Engine
+ * Features: Auto Team Rotation (10s), Embedded Teams Registry, HD Vector Kits, Live Timer & Scoreboard
  */
 
-const CONFIG = {
-  dataPath: 'assets/data/custom-lineups.json',
-  defaultHomeId: '1',  // Arsenal
-  defaultAwayId: '6'   // Chelsea
+// 20 Clubs Fallback Registry to Guarantee Display on Static Hosts
+const FALLBACK_REGISTRY = {
+  "1": {
+    teamId: 1, teamName: "Arsenal", shortName: "ARS", teamCode: "ars", formation: "4-2-3-1",
+    lineup: [
+      { name: "Raya", pos: "GK", role: "GK" },
+      { name: "Calafiori", pos: "DEF", role: "LB" },
+      { name: "Gabriel", pos: "DEF", role: "LCB" },
+      { name: "Konsa", pos: "DEF", role: "RCB" },
+      { name: "Timber", pos: "DEF", role: "RB" },
+      { name: "Guimarães", pos: "MID", role: "LDM" },
+      { name: "Rice", pos: "MID", role: "RDM" },
+      { name: "Tzolis", pos: "MID", role: "LAM" },
+      { name: "Ødegaard", pos: "MID", role: "CAM" },
+      { name: "Saka", pos: "MID", role: "RAM" },
+      { name: "Havertz", pos: "FWD", role: "ST" }
+    ]
+  },
+  "2": {
+    teamId: 2, teamName: "Aston Villa", shortName: "AVL", teamCode: "avl", formation: "4-2-3-1",
+    lineup: [
+      { name: "Suzuki", pos: "GK", role: "GK" },
+      { name: "Ruggeri", pos: "DEF", role: "LB" },
+      { name: "Mings", pos: "DEF", role: "LCB" },
+      { name: "Lindelöf", pos: "DEF", role: "RCB" },
+      { name: "Wan-Bissaka", pos: "DEF", role: "RB" },
+      { name: "Gomes", pos: "MID", role: "LDM" },
+      { name: "Kamara", pos: "MID", role: "RDM" },
+      { name: "Buendía", pos: "MID", role: "LAM" },
+      { name: "Manzambi", pos: "MID", role: "CAM" },
+      { name: "McGinn", pos: "MID", role: "RAM" },
+      { name: "Jackson", pos: "FWD", role: "ST" }
+    ]
+  },
+  "6": {
+    teamId: 6, teamName: "Chelsea", shortName: "CHE", teamCode: "che", formation: "3-4-2-1",
+    lineup: [
+      { name: "Martínez", pos: "GK", role: "GK" },
+      { name: "Colwill", pos: "DEF", role: "LCB" },
+      { name: "Lacroix", pos: "DEF", role: "CB" },
+      { name: "Fofana", pos: "DEF", role: "RCB" },
+      { name: "Chavarría", pos: "MID", role: "LWB" },
+      { name: "Barco", pos: "MID", role: "LDM" },
+      { name: "Henderson", pos: "MID", role: "RDM" },
+      { name: "Neto", pos: "MID", role: "RWB" },
+      { name: "Rogers", pos: "MID", role: "LAM" },
+      { name: "Palmer", pos: "MID", role: "RAM" },
+      { name: "Welbeck", pos: "FWD", role: "ST" }
+    ]
+  },
+  "14": {
+    teamId: 14, teamName: "Liverpool", shortName: "LIV", teamCode: "liv", formation: "4-2-3-1",
+    lineup: [
+      { name: "Alisson", pos: "GK", role: "GK" },
+      { name: "Kerkez", pos: "DEF", role: "LB" },
+      { name: "van Dijk", pos: "DEF", role: "LCB" },
+      { name: "Jacquet", pos: "DEF", role: "RCB" },
+      { name: "Araujo", pos: "DEF", role: "RB" },
+      { name: "Mac Allister", pos: "MID", role: "LDM" },
+      { name: "Szoboszlai", pos: "MID", role: "RDM" },
+      { name: "Barcola", pos: "MID", role: "LAM" },
+      { name: "Wirtz", pos: "MID", role: "CAM" },
+      { name: "Gakpo", pos: "MID", role: "RAM" },
+      { name: "Isak", pos: "FWD", role: "ST" }
+    ]
+  },
+  "15": {
+    teamId: 15, teamName: "Manchester City", shortName: "MCI", teamCode: "mci", formation: "4-2-3-1",
+    lineup: [
+      { name: "Donnarumma", pos: "GK", role: "GK" },
+      { name: "Gvardiol", pos: "DEF", role: "LB" },
+      { name: "Guéhi", pos: "DEF", role: "LCB" },
+      { name: "Dias", pos: "DEF", role: "RCB" },
+      { name: "Nunes", pos: "DEF", role: "RB" },
+      { name: "Anderson", pos: "MID", role: "LDM" },
+      { name: "Fernández", pos: "MID", role: "RDM" },
+      { name: "Semenyo", pos: "MID", role: "LAM" },
+      { name: "Cherki", pos: "MID", role: "CAM" },
+      { name: "Ndiaye", pos: "MID", role: "RAM" },
+      { name: "Haaland", pos: "FWD", role: "ST" }
+    ]
+  },
+  "16": {
+    teamId: 16, teamName: "Manchester United", shortName: "MUN", teamCode: "mun", formation: "4-2-3-1",
+    lineup: [
+      { name: "Lammens", pos: "GK", role: "GK" },
+      { name: "Shaw", pos: "DEF", role: "LB" },
+      { name: "Martínez", pos: "DEF", role: "LCB" },
+      { name: "Maguire", pos: "DEF", role: "RCB" },
+      { name: "Dalot", pos: "DEF", role: "RB" },
+      { name: "Mainoo", pos: "MID", role: "LDM" },
+      { name: "Tielemans", pos: "MID", role: "RDM" },
+      { name: "Rashford", pos: "MID", role: "LAM" },
+      { name: "Fernandes", pos: "MID", role: "CAM" },
+      { name: "Mbeumo", pos: "MID", role: "RAM" },
+      { name: "Cunha", pos: "FWD", role: "ST" }
+    ]
+  }
 };
 
 let teamsData = {};
@@ -35,14 +129,18 @@ const TEAM_COLORS = {
   sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
 };
 
-// Match State
+// Global App States
+let currentDisplayedSide = 'home'; // 'home' or 'away'
+let autoSwitchTimer = null;
+let isAutoSwitchEnabled = true;
+
 let matchSeconds = 0;
 let timerInterval = null;
 let isTimerRunning = false;
 let homeScore = 0;
 let awayScore = 0;
 
-// High-Definition Vector Jersey SVG
+// High Definition Vector Jersey Generator
 function getJerseySVG(teamCode, isGK = false) {
   const colors = TEAM_COLORS[teamCode] || { primary: '#2563EB', secondary: '#FFF', gk: '#10B981' };
   const baseColor = isGK ? colors.gk : colors.primary;
@@ -57,39 +155,29 @@ function getJerseySVG(teamCode, isGK = false) {
   `;
 }
 
-// Tactical Formation Tier Sorter (FWD -> MID -> DEF -> GK)
+// Tactical Formation Tier Sorter
 function groupLineupByTiers(lineup) {
   const tiers = { FWD: [], MID: [], DEF: [], GK: [] };
   lineup.forEach(p => {
-    if (tiers[p.pos]) {
-      tiers[p.pos].push(p);
-    } else {
-      tiers.MID.push(p);
-    }
+    if (tiers[p.pos]) tiers[p.pos].push(p);
+    else tiers.MID.push(p);
   });
   return tiers;
 }
 
-// Render Team by ID
-function renderTeam(teamId, type = 'home') {
-  // Key string သို့မဟုတ် number နှစ်မျိုးစလုံး ရှာဖွေနိုင်အောင် handle လုပ်ထားသည်
+// Render Selected Team into the Right-Side Pitch
+function displayTeamLineup(teamId, side = 'home') {
   const team = teamsData[String(teamId)] || Object.values(teamsData).find(t => String(t.teamId) === String(teamId));
   if (!team || !team.lineup) return;
 
-  const isHome = type === 'home';
-  const prefix = isHome ? 'home' : 'away';
+  // Header Details
+  document.getElementById('displayTeamBadge').textContent = team.shortName;
+  document.getElementById('displayTeamName').textContent = team.teamName;
+  document.getElementById('displayTeamStatus').textContent = side === 'home' ? 'HOME LINEUP' : 'AWAY LINEUP';
+  document.getElementById('displayFormation').textContent = team.formation;
 
-  // 1. Update Scoreboard HUD
-  document.getElementById(`hud${isHome ? 'Home' : 'Away'}Badge`).textContent = team.shortName;
-  document.getElementById(`hud${isHome ? 'Home' : 'Away'}Name`).textContent = team.teamName;
-
-  // 2. Update Card Meta Header
-  document.getElementById(`card${isHome ? 'Home' : 'Away'}Badge`).textContent = team.shortName;
-  document.getElementById(`card${isHome ? 'Home' : 'Away'}Name`).textContent = team.teamName;
-  document.getElementById(`card${isHome ? 'Home' : 'Away'}Formation`).textContent = team.formation;
-
-  // 3. Render Pitch Players
-  const pitchEl = document.getElementById(`${prefix}PitchSurface`);
+  // Render Pitch Players
+  const pitchEl = document.getElementById('pitchSurface');
   pitchEl.innerHTML = '';
 
   const tiers = groupLineupByTiers(team.lineup);
@@ -104,7 +192,7 @@ function renderTeam(teamId, type = 'home') {
       const slot = document.createElement('div');
       slot.className = 'player-slot';
       slot.innerHTML = `
-        <div class="jersey-box">
+        <div class="jersey-icon-box">
           ${getJerseySVG(team.teamCode, isGK)}
           <span class="role-tag">${player.role}</span>
         </div>
@@ -119,45 +207,78 @@ function renderTeam(teamId, type = 'home') {
   });
 }
 
-// Score Management
-function updateScores() {
-  document.getElementById('ctrlHomeScore').textContent = homeScore;
-  document.getElementById('hudHomeScore').textContent = homeScore;
-  document.getElementById('ctrlAwayScore').textContent = awayScore;
-  document.getElementById('hudAwayScore').textContent = awayScore;
+// Auto Switch Lineups Between Home & Away every 10 seconds
+function startAutoRotation() {
+  if (autoSwitchTimer) clearInterval(autoSwitchTimer);
+  if (!isAutoSwitchEnabled) return;
+
+  autoSwitchTimer = setInterval(() => {
+    const homeId = document.getElementById('homeSelect').value;
+    const awayId = document.getElementById('awaySelect').value;
+
+    if (currentDisplayedSide === 'home') {
+      currentDisplayedSide = 'away';
+      displayTeamLineup(awayId, 'away');
+    } else {
+      currentDisplayedSide = 'home';
+      displayTeamLineup(homeId, 'home');
+    }
+  }, 10000); // 10 seconds interval
 }
 
-// Match Timer Logic
-function formatTimer(totalSec) {
+// Update Scoreboard HUD at Bottom Center
+function updateBottomScoreboard() {
+  const homeId = document.getElementById('homeSelect').value;
+  const awayId = document.getElementById('awaySelect').value;
+
+  const homeTeam = teamsData[String(homeId)];
+  const awayTeam = teamsData[String(awayId)];
+
+  if (homeTeam) {
+    document.getElementById('hudHomeBadge').textContent = homeTeam.shortName;
+    document.getElementById('hudHomeName').textContent = homeTeam.teamName;
+  }
+  if (awayTeam) {
+    document.getElementById('hudAwayBadge').textContent = awayTeam.shortName;
+    document.getElementById('hudAwayName').textContent = awayTeam.teamName;
+  }
+
+  document.getElementById('ctrlHomeScore').textContent = homeScore;
+  document.getElementById('hudHomeGoals').textContent = homeScore;
+  document.getElementById('ctrlAwayScore').textContent = awayScore;
+  document.getElementById('hudAwayGoals').textContent = awayScore;
+}
+
+// Clock Utilities
+function formatClock(totalSec) {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
   return `${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
 }
 
-function updateTimerDisplay() {
-  const formatted = formatTimer(matchSeconds);
-  document.getElementById('hudClock').textContent = formatted;
+function updateClockHUD() {
+  document.getElementById('hudMatchClock').textContent = formatClock(matchSeconds);
 
-  const halfBadge = document.getElementById('hudMatchHalf');
+  const periodBadge = document.getElementById('hudMatchPeriod');
   if (matchSeconds >= 2700 && matchSeconds < 5400) {
-    halfBadge.textContent = '2ND HALF';
+    periodBadge.textContent = '2ND HALF';
   } else if (matchSeconds >= 5400) {
-    halfBadge.textContent = 'EXTRA TIME / FT';
+    periodBadge.textContent = 'EXTRA TIME / FT';
   } else {
-    halfBadge.textContent = '1ST HALF';
+    periodBadge.textContent = '1ST HALF';
   }
 }
 
-function toggleTimer() {
-  const startBtn = document.getElementById('timerStartBtn');
+function toggleClock() {
+  const btn = document.getElementById('btnClockToggle');
   if (isTimerRunning) {
     clearInterval(timerInterval);
     isTimerRunning = false;
-    startBtn.textContent = 'Start';
-    startBtn.classList.remove('btn-secondary');
+    btn.textContent = 'Start';
+    btn.classList.remove('btn-secondary');
   } else {
-    const inputM = parseInt(document.getElementById('manualMin').value) || 0;
-    const inputS = parseInt(document.getElementById('manualSec').value) || 0;
+    const inputM = parseInt(document.getElementById('inputClockMin').value) || 0;
+    const inputS = parseInt(document.getElementById('inputClockSec').value) || 0;
 
     if (matchSeconds === 0 && (inputM > 0 || inputS > 0)) {
       matchSeconds = (inputM * 60) + inputS;
@@ -165,71 +286,88 @@ function toggleTimer() {
 
     timerInterval = setInterval(() => {
       matchSeconds++;
-      updateTimerDisplay();
-      document.getElementById('manualMin').value = Math.floor(matchSeconds / 60);
-      document.getElementById('manualSec').value = matchSeconds % 60;
+      updateClockHUD();
+      document.getElementById('inputClockMin').value = Math.floor(matchSeconds / 60);
+      document.getElementById('inputClockSec').value = matchSeconds % 60;
     }, 1000);
 
     isTimerRunning = true;
-    startBtn.textContent = 'Pause';
-    startBtn.classList.add('btn-secondary');
+    btn.textContent = 'Pause';
+    btn.classList.add('btn-secondary');
   }
 }
 
-function resetTimer() {
+function resetClock() {
   clearInterval(timerInterval);
   isTimerRunning = false;
   matchSeconds = 0;
-  document.getElementById('manualMin').value = 0;
-  document.getElementById('manualSec').value = 0;
-  document.getElementById('timerStartBtn').textContent = 'Start';
-  document.getElementById('timerStartBtn').classList.remove('btn-secondary');
-  updateTimerDisplay();
+  document.getElementById('inputClockMin').value = 0;
+  document.getElementById('inputClockSec').value = 0;
+  document.getElementById('btnClockToggle').textContent = 'Start';
+  document.getElementById('btnClockToggle').classList.remove('btn-secondary');
+  updateClockHUD();
 }
 
-// UI Event Handlers
-function setupEventHandlers() {
-  const homeSelect = document.getElementById('homeTeamSelect');
-  const awaySelect = document.getElementById('awayTeamSelect');
+// Bind User Interactions
+function setupEvents() {
+  const homeSelect = document.getElementById('homeSelect');
+  const awaySelect = document.getElementById('awaySelect');
 
-  homeSelect.addEventListener('change', (e) => renderTeam(e.target.value, 'home'));
-  awaySelect.addEventListener('change', (e) => renderTeam(e.target.value, 'away'));
-
-  // Score Steppers
-  document.getElementById('homeScorePlus').addEventListener('click', () => { homeScore++; updateScores(); });
-  document.getElementById('homeScoreMinus').addEventListener('click', () => { if (homeScore > 0) homeScore--; updateScores(); });
-  document.getElementById('awayScorePlus').addEventListener('click', () => { awayScore++; updateScores(); });
-  document.getElementById('awayScoreMinus').addEventListener('click', () => { if (awayScore > 0) awayScore--; updateScores(); });
-
-  // Timer Buttons
-  document.getElementById('timerStartBtn').addEventListener('click', toggleTimer);
-  document.getElementById('timerResetBtn').addEventListener('click', resetTimer);
-
-  document.getElementById('manualMin').addEventListener('change', (e) => {
-    matchSeconds = (parseInt(e.target.value) || 0) * 60 + (parseInt(document.getElementById('manualSec').value) || 0);
-    updateTimerDisplay();
-  });
-  document.getElementById('manualSec').addEventListener('change', (e) => {
-    matchSeconds = (parseInt(document.getElementById('manualMin').value) || 0) * 60 + (parseInt(e.target.value) || 0);
-    updateTimerDisplay();
+  homeSelect.addEventListener('change', () => {
+    updateBottomScoreboard();
+    if (currentDisplayedSide === 'home') displayTeamLineup(homeSelect.value, 'home');
   });
 
-  // Toggle Streamer Controls
-  document.getElementById('toggleHudBtn').addEventListener('click', () => {
-    document.getElementById('controllerHub').classList.toggle('hidden');
+  awaySelect.addEventListener('change', () => {
+    updateBottomScoreboard();
+    if (currentDisplayedSide === 'away') displayTeamLineup(awaySelect.value, 'away');
   });
 
-  // URL Parameter check (?controls=false)
+  // Score Controls
+  document.getElementById('btnHomeScoreAdd').addEventListener('click', () => { homeScore++; updateBottomScoreboard(); });
+  document.getElementById('btnHomeScoreSub').addEventListener('click', () => { if (homeScore > 0) homeScore--; updateBottomScoreboard(); });
+  document.getElementById('btnAwayScoreAdd').addEventListener('click', () => { awayScore++; updateBottomScoreboard(); });
+  document.getElementById('btnAwayScoreSub').addEventListener('click', () => { if (awayScore > 0) awayScore--; updateBottomScoreboard(); });
+
+  // Clock Controls
+  document.getElementById('btnClockToggle').addEventListener('click', toggleClock);
+  document.getElementById('btnClockReset').addEventListener('click', resetClock);
+
+  document.getElementById('inputClockMin').addEventListener('change', (e) => {
+    matchSeconds = (parseInt(e.target.value) || 0) * 60 + (parseInt(document.getElementById('inputClockSec').value) || 0);
+    updateClockHUD();
+  });
+  document.getElementById('inputClockSec').addEventListener('change', (e) => {
+    matchSeconds = (parseInt(document.getElementById('inputClockMin').value) || 0) * 60 + (parseInt(e.target.value) || 0);
+    updateClockHUD();
+  });
+
+  // Toggle Auto Switching
+  const autoBtn = document.getElementById('btnAutoSwitchToggle');
+  autoBtn.addEventListener('click', () => {
+    isAutoSwitchEnabled = !isAutoSwitchEnabled;
+    autoBtn.classList.toggle('active', isAutoSwitchEnabled);
+    autoBtn.textContent = isAutoSwitchEnabled ? 'Auto: ON (10s)' : 'Auto: OFF';
+    if (isAutoSwitchEnabled) startAutoRotation();
+    else clearInterval(autoSwitchTimer);
+  });
+
+  // Toggle Streamer Dashboard Header
+  document.getElementById('btnHideControlBar').addEventListener('click', () => {
+    document.getElementById('streamerDashboard').classList.toggle('hidden');
+  });
+
+  // URL Parameter auto-hide (?controls=false)
   const params = new URLSearchParams(window.location.search);
   if (params.get('controls') === 'false') {
-    document.getElementById('controllerHub').classList.add('hidden');
+    document.getElementById('streamerDashboard').classList.add('hidden');
   }
 }
 
-// Populate Selectors from Data
-function populateUI() {
-  const homeSelect = document.getElementById('homeTeamSelect');
-  const awaySelect = document.getElementById('awayTeamSelect');
+// Populate UI Dropdowns
+function initDropdowns() {
+  const homeSelect = document.getElementById('homeSelect');
+  const awaySelect = document.getElementById('awaySelect');
 
   homeSelect.innerHTML = '';
   awaySelect.innerHTML = '';
@@ -240,30 +378,29 @@ function populateUI() {
   });
 
   const params = new URLSearchParams(window.location.search);
-  const initialHome = params.get('home') || CONFIG.defaultHomeId;
-  const initialAway = params.get('away') || CONFIG.defaultAwayId;
+  homeSelect.value = params.get('home') || '1';
+  awaySelect.value = params.get('away') || '6';
 
-  homeSelect.value = initialHome;
-  awaySelect.value = initialAway;
-
-  renderTeam(initialHome, 'home');
-  renderTeam(initialAway, 'away');
+  updateBottomScoreboard();
+  displayTeamLineup(homeSelect.value, 'home');
+  startAutoRotation();
 }
 
-// Fetch JSON Engine
+// App Bootstrapper
 async function initApp() {
-  setupEventHandlers();
-  updateScores();
-  updateTimerDisplay();
+  setupEvents();
+  updateClockHUD();
 
   try {
-    const res = await fetch(CONFIG.dataPath);
-    if (!res.ok) throw new Error(`HTTP error ${res.status}`);
+    const res = await fetch('assets/data/custom-lineups.json');
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
     teamsData = await res.json();
-    populateUI();
   } catch (err) {
-    console.error('Lineup JSON loading failed:', err);
+    console.warn('Network issue fetching JSON. Activating Embedded Registry:', err);
+    teamsData = FALLBACK_REGISTRY;
   }
+
+  initDropdowns();
 }
 
 document.addEventListener('DOMContentLoaded', initApp);
