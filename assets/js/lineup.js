@@ -1,13 +1,13 @@
 /**
  * Watch-Along Live Broadcast Engine
- * Handles Real Club Logos, Real Outfield/GK Kits, Tactical Role Separation & Scoreboard
+ * Features: Real Outfield Kit PNGs, 5-Tier Tactical Grid, Auto-Switching Lineup Frame & Match HUD
  */
 
 const CONFIG = {
   dataPath: 'assets/data/custom-lineups.json',
   clubsPath: 'assets/images/clubs/',
-  jerseysPath: 'assets/images/jerseys/outfield/',
-  gkJerseysPath: 'assets/images/jerseys/gk/'
+  outfieldKitPath: 'assets/images/jerseys/outfield/',
+  gkKitPath: 'assets/images/jerseys/gk/'
 };
 
 let teamsData = {};
@@ -15,17 +15,41 @@ let currentDisplayedSide = 'home';
 let autoSwitchTimer = null;
 let isAutoSwitchEnabled = true;
 
-// Match States
+// Match Clock & Goals State
 let matchSeconds = 0;
 let timerInterval = null;
 let isTimerRunning = false;
 let homeScore = 0;
 let awayScore = 0;
 
-// High-Accuracy Formation Tier Sorter by Player Tactical Roles
-function groupLineupByTacticalTiers(lineup) {
+// Kit Color Palette for SVG Fallback
+const TEAM_COLORS = {
+  ars: { primary: '#EF0107', secondary: '#FFFFFF', gk: '#00FF66' },
+  avl: { primary: '#95BFE5', secondary: '#670E36', gk: '#FFE600' },
+  bou: { primary: '#DA020E', secondary: '#000000', gk: '#00E5FF' },
+  bre: { primary: '#E30613', secondary: '#FFFFFF', gk: '#FFCC00' },
+  bha: { primary: '#0057B8', secondary: '#FFFFFF', gk: '#FF0055' },
+  che: { primary: '#034694', secondary: '#EE2737', gk: '#E8C838' },
+  cov: { primary: '#5CABE0', secondary: '#000000', gk: '#FF8A00' },
+  cry: { primary: '#1B458F', secondary: '#C4122E', gk: '#76FF03' },
+  eve: { primary: '#003399', secondary: '#FFFFFF', gk: '#00E5FF' },
+  ful: { primary: '#FFFFFF', secondary: '#000000', gk: '#FFD700' },
+  hul: { primary: '#F5971E', secondary: '#000000', gk: '#39FF14' },
+  ips: { primary: '#004494', secondary: '#FFFFFF', gk: '#FF007F' },
+  lee: { primary: '#FFFFFF', secondary: '#1D428A', gk: '#00FF85' },
+  liv: { primary: '#C8102E', secondary: '#00B2A9', gk: '#2D3436' },
+  mci: { primary: '#6CABDD', secondary: '#1C2C5B', gk: '#E056FD' },
+  mun: { primary: '#DA291C', secondary: '#000000', gk: '#2ED573' },
+  new: { primary: '#241F20', secondary: '#FFFFFF', gk: '#3742FA' },
+  nfo: { primary: '#DD0000', secondary: '#FFFFFF', gk: '#FFA502' },
+  tot: { primary: '#132257', secondary: '#FFFFFF', gk: '#2ED573' },
+  sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
+};
+
+// 5-Tier Tactical Formation Sorter (FWD -> AM -> DM -> DEF -> GK)
+function groupLineupByTier(lineup) {
   const tiers = {
-    ST: [],
+    FWD: [],
     AM: [],
     DM: [],
     DEF: [],
@@ -33,10 +57,13 @@ function groupLineupByTacticalTiers(lineup) {
   };
 
   lineup.forEach(player => {
+    const tier = player.tier ? player.tier.toUpperCase() : '';
     const role = (player.role || '').toUpperCase();
     const pos = (player.pos || '').toUpperCase();
 
-    if (pos === 'GK' || role === 'GK') {
+    if (tier && tiers[tier]) {
+      tiers[tier].push(player);
+    } else if (pos === 'GK' || role === 'GK') {
       tiers.GK.push(player);
     } else if (pos === 'DEF' || ['LB', 'LCB', 'CB', 'RCB', 'RB', 'LWB', 'RWB'].includes(role)) {
       tiers.DEF.push(player);
@@ -44,50 +71,62 @@ function groupLineupByTacticalTiers(lineup) {
       tiers.DM.push(player);
     } else if (['LAM', 'CAM', 'RAM', 'LM', 'RM'].includes(role)) {
       tiers.AM.push(player);
-    } else if (pos === 'FWD' || ['ST', 'CF', 'LW', 'RW', 'LS', 'RS'].includes(role)) {
-      tiers.ST.push(player);
     } else {
-      tiers.AM.push(player);
+      tiers.FWD.push(player);
     }
   });
 
   return tiers;
 }
 
-// Generate Player Kit Image with Automatic Fallback
-function getJerseyImageHtml(teamCode, isGK = false) {
-  const folder = isGK ? CONFIG.gkJerseysPath : CONFIG.jerseysPath;
-  const kitUrl = `${folder}${teamCode}.png`;
-  const fallbackUrl = `${CONFIG.jerseysPath}${teamCode}.png`;
+// Fallback Scalable Vector Kit
+function getFallbackJerseySVG(teamCode, isGK = false) {
+  const colors = TEAM_COLORS[teamCode] || { primary: '#2563EB', secondary: '#FFF', gk: '#10B981' };
+  const baseColor = isGK ? colors.gk : colors.primary;
+  const stripeColor = isGK ? '#00000033' : colors.secondary;
+
+  return `data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M30 18 L40 28 C45 32 55 32 60 28 L70 18 L88 34 L76 46 L72 38 L72 84 L28 84 L28 38 L24 46 L12 34 Z" fill="${encodeURIComponent(baseColor)}" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/><path d="M42 26 C46 30 54 30 58 26" stroke="${encodeURIComponent(stripeColor)}" stroke-width="3"/><rect x="46" y="38" width="8" height="42" fill="${encodeURIComponent(stripeColor)}" opacity="0.85" rx="2"/></svg>`;
+}
+
+// Render Real Kit PNG from assets/images/jerseys/
+function getPlayerKitHtml(teamCode, isGK = false) {
+  const kitFolder = isGK ? CONFIG.gkKitPath : CONFIG.outfieldKitPath;
+  const kitUrl = `${kitFolder}${teamCode}.png`;
+  const fallbackOutfield = `${CONFIG.outfieldKitPath}${teamCode}.png`;
+  const fallbackSvg = getFallbackJerseySVG(teamCode, isGK);
 
   return `
     <img src="${kitUrl}" 
          alt="${teamCode} kit" 
          class="real-kit-img" 
-         onerror="if(this.src!=='${fallbackUrl}'){this.src='${fallbackUrl}';}else{this.style.display='none';}" />
+         onerror="if(this.src!=='${fallbackOutfield}'){this.src='${fallbackOutfield}';}else{this.onerror=null;this.src='${fallbackSvg}';}" />
   `;
 }
 
-// Render Team onto the Right Pitch Frame
+// Render Selected Team Lineup into Tactical Pitch Frame
 function displayTeamLineup(teamId, side = 'home') {
   const team = teamsData[String(teamId)] || Object.values(teamsData).find(t => String(t.teamId) === String(teamId));
   if (!team || !team.lineup) return;
 
-  // Header Details
-  document.getElementById('displayTeamLogo').src = `${CONFIG.clubsPath}${team.teamCode}.png`;
+  // 1. Header Details (Real Logo + Side Status)
+  const logoEl = document.getElementById('displayTeamLogo');
+  logoEl.src = `${CONFIG.clubsPath}${team.teamCode}.png`;
+  logoEl.onerror = () => { logoEl.style.display = 'none'; };
+
   document.getElementById('displayTeamName').textContent = team.teamName;
   document.getElementById('displayTeamStatus').textContent = side === 'home' ? 'HOME LINEUP' : 'AWAY LINEUP';
   document.getElementById('displayFormation').textContent = team.formation;
 
+  // 2. Pitch Players Render
   const pitchEl = document.getElementById('pitchSurface');
   pitchEl.innerHTML = '';
 
-  const tacticalTiers = groupLineupByTacticalTiers(team.lineup);
-  const tierOrder = ['ST', 'AM', 'DM', 'DEF', 'GK'];
+  const tacticalTiers = groupLineupByTier(team.lineup);
+  const tierOrder = ['FWD', 'AM', 'DM', 'DEF', 'GK'];
 
   tierOrder.forEach(tierKey => {
     const playersInTier = tacticalTiers[tierKey];
-    if (playersInTier.length === 0) return;
+    if (!playersInTier || playersInTier.length === 0) return;
 
     const rowEl = document.createElement('div');
     rowEl.className = `pitch-row pitch-row-${tierKey.toLowerCase()}`;
@@ -98,7 +137,7 @@ function displayTeamLineup(teamId, side = 'home') {
       slot.className = 'player-slot';
       slot.innerHTML = `
         <div class="jersey-icon-box">
-          ${getJerseyImageHtml(team.teamCode, isGK)}
+          ${getPlayerKitHtml(team.teamCode, isGK)}
           <span class="role-tag">${player.role}</span>
         </div>
         <div class="name-plate">
@@ -112,7 +151,7 @@ function displayTeamLineup(teamId, side = 'home') {
   });
 }
 
-// Auto Rotation (10 seconds switch)
+// Auto Rotation (10 Seconds Interval)
 function startAutoRotation() {
   if (autoSwitchTimer) clearInterval(autoSwitchTimer);
   if (!isAutoSwitchEnabled) return;
@@ -131,7 +170,7 @@ function startAutoRotation() {
   }, 10000);
 }
 
-// Update Bottom Scoreboard HUD
+// Update Scoreboard HUD at Bottom Center
 function updateBottomScoreboard() {
   const homeId = document.getElementById('homeSelect').value;
   const awayId = document.getElementById('awaySelect').value;
@@ -154,7 +193,7 @@ function updateBottomScoreboard() {
   document.getElementById('hudAwayGoals').textContent = awayScore;
 }
 
-// Timer Functions
+// Match Timer Functions
 function formatClock(totalSec) {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
@@ -213,7 +252,7 @@ function resetClock() {
   updateClockHUD();
 }
 
-// User Action Handlers
+// Event Bindings
 function setupEvents() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
@@ -228,13 +267,13 @@ function setupEvents() {
     if (currentDisplayedSide === 'away') displayTeamLineup(awaySelect.value, 'away');
   });
 
-  // Score Buttons
+  // Score Steppers
   document.getElementById('btnHomeScoreAdd').addEventListener('click', () => { homeScore++; updateBottomScoreboard(); });
   document.getElementById('btnHomeScoreSub').addEventListener('click', () => { if (homeScore > 0) homeScore--; updateBottomScoreboard(); });
   document.getElementById('btnAwayScoreAdd').addEventListener('click', () => { awayScore++; updateBottomScoreboard(); });
   document.getElementById('btnAwayScoreSub').addEventListener('click', () => { if (awayScore > 0) awayScore--; updateBottomScoreboard(); });
 
-  // Clock Buttons
+  // Clock Actions
   document.getElementById('btnClockToggle').addEventListener('click', toggleClock);
   document.getElementById('btnClockReset').addEventListener('click', resetClock);
 
@@ -257,19 +296,19 @@ function setupEvents() {
     else clearInterval(autoSwitchTimer);
   });
 
-  // Toggle Dashboard Header
+  // Hide Top Streamer Control Bar
   document.getElementById('btnHideControlBar').addEventListener('click', () => {
     document.getElementById('streamerDashboard').classList.toggle('hidden');
   });
 
-  // URL Parameter auto-hide (?controls=false)
+  // URL Parameter auto-hide check (?controls=false)
   const params = new URLSearchParams(window.location.search);
   if (params.get('controls') === 'false') {
     document.getElementById('streamerDashboard').classList.add('hidden');
   }
 }
 
-// Populate Selectors from Data
+// Populate UI Dropdowns
 function initDropdowns() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
@@ -291,7 +330,7 @@ function initDropdowns() {
   startAutoRotation();
 }
 
-// Init Application
+// Bootstrapper
 async function initApp() {
   setupEvents();
   updateClockHUD();
@@ -302,7 +341,7 @@ async function initApp() {
     teamsData = await res.json();
     initDropdowns();
   } catch (err) {
-    console.error('Failed to load lineup JSON:', err);
+    console.error('Failed to load custom-lineups.json:', err);
   }
 }
 
