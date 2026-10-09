@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Live Watch-Along Dual Lineups</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="assets/css/lineup.css">
+</head>
+<body class="obs-transparent">
+  <!-- Controls Bar (OBS တွင် URL Parameter သုံးပါက hide လုပ်ထားနိုင်သည်) -->
+  <header class="controller-bar" id="controllerBar">
+    <div class="select-group">
+      <label for="homeSelect">Home Team</label>
+      <select id="homeSelect" aria-label="Select Home Team"></select>
+    </div>
+    <div class="vs-badge">VS</div>
+    <div class="select-group">
+      <label for="awaySelect">Away Team</label>
+      <select id="awaySelect" aria-label="Select Away Team"></select>
+    </div>
+    <button id="toggleControlsBtn" type="button" title="Hide controls for OBS stream">Hide Controls</button>
+  </header>
+
+  <!-- Dual Lineup Stage -->
+  <main class="arena-container">
+    <!-- Home Team Board -->
+    <section class="team-board home-board" id="homeBoard" aria-label="Home Team Lineup">
+      <div class="team-header">
+        <div class="team-badge" id="homeBadge">ARS</div>
+        <div class="team-details">
+          <h1 class="team-name" id="homeName">Arsenal</h1>
+          <span class="formation-pill" id="homeFormation">4-2-3-1</span>
+        </div>
+      </div>
+      <div class="pitch-surface" id="homePitch">
+        <!-- Injected via lineup.js -->
+      </div>
+    </section>
+
+    <!-- Away Team Board -->
+    <section class="team-board away-board" id="awayBoard" aria-label="Away Team Lineup">
+      <div class="team-header">
+        <div class="team-badge" id="awayBadge">CHE</div>
+        <div class="team-details">
+          <h1 class="team-name" id="awayName">Chelsea</h1>
+          <span class="formation-pill" id="awayFormation">3-4-2-1</span>
+        </div>
+      </div>
+      <div class="pitch-surface" id="awayPitch">
+        <!-- Injected via lineup.js -->
+      </div>
+    </section>
+  </main>
+
+  <script src="assets/js/lineup.js"></script>
+</body>
+</html>
