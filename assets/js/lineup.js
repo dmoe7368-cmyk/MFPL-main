@@ -1,6 +1,6 @@
 /**
- * Watch-Along Live Broadcast Engine
- * Features: Real Outfield Kit PNGs, 5-Tier Tactical Grid, Auto-Switching Lineup Frame & Match HUD
+ * Watch-Along Live Broadcast Engine (Clean Production Build)
+ * Fixes: Stray character bug, Deep Emerald Grid & Bulletproof Auto-Rotation
  */
 
 const CONFIG = {
@@ -15,14 +15,14 @@ let currentDisplayedSide = 'home';
 let autoSwitchTimer = null;
 let isAutoSwitchEnabled = true;
 
-// Match Clock & Goals State
+// Match Clock & Scores
 let matchSeconds = 0;
 let timerInterval = null;
 let isTimerRunning = false;
 let homeScore = 0;
 let awayScore = 0;
 
-// Kit Color Palette for SVG Fallback
+// High-Contrast SVG Kit Fallback
 const TEAM_COLORS = {
   ars: { primary: '#EF0107', secondary: '#FFFFFF', gk: '#00FF66' },
   avl: { primary: '#95BFE5', secondary: '#670E36', gk: '#FFE600' },
@@ -46,7 +46,7 @@ const TEAM_COLORS = {
   sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
 };
 
-// 5-Tier Tactical Formation Sorter (FWD -> AM -> DM -> DEF -> GK)
+// 5-Tier Tactical Formation Tier Sorter
 function groupLineupByTier(lineup) {
   const tiers = {
     FWD: [],
@@ -79,7 +79,7 @@ function groupLineupByTier(lineup) {
   return tiers;
 }
 
-// Fallback Scalable Vector Kit
+// Fallback Kit Data URI
 function getFallbackJerseySVG(teamCode, isGK = false) {
   const colors = TEAM_COLORS[teamCode] || { primary: '#2563EB', secondary: '#FFF', gk: '#10B981' };
   const baseColor = isGK ? colors.gk : colors.primary;
@@ -88,27 +88,24 @@ function getFallbackJerseySVG(teamCode, isGK = false) {
   return `data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M30 18 L40 28 C45 32 55 32 60 28 L70 18 L88 34 L76 46 L72 38 L72 84 L28 84 L28 38 L24 46 L12 34 Z" fill="${encodeURIComponent(baseColor)}" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/><path d="M42 26 C46 30 54 30 58 26" stroke="${encodeURIComponent(stripeColor)}" stroke-width="3"/><rect x="46" y="38" width="8" height="42" fill="${encodeURIComponent(stripeColor)}" opacity="0.85" rx="2"/></svg>`;
 }
 
-// Render Real Kit PNG from assets/images/jerseys/
+// Clean Kit Image Generator (Completely prevents syntax arrows)
 function getPlayerKitHtml(teamCode, isGK = false) {
   const kitFolder = isGK ? CONFIG.gkKitPath : CONFIG.outfieldKitPath;
   const kitUrl = `${kitFolder}${teamCode}.png`;
   const fallbackOutfield = `${CONFIG.outfieldKitPath}${teamCode}.png`;
   const fallbackSvg = getFallbackJerseySVG(teamCode, isGK);
 
-  return `
-    <img src="${kitUrl}" 
-         alt="${teamCode} kit" 
-         class="real-kit-img" 
-         onerror="if(this.src!=='${fallbackOutfield}'){this.src='${fallbackOutfield}';}else{this.onerror=null;this.src='${fallbackSvg}';}" />
-  `;
+  return `<img src="${kitUrl}" alt="${teamCode}" class="real-kit-img" onerror="if(this.src!=='${fallbackOutfield}'){this.src='${fallbackOutfield}';}else{this.onerror=null;this.src='${fallbackSvg}';}">`;
 }
 
-// Render Selected Team Lineup into Tactical Pitch Frame
+// Render Team into Tactical Pitch Frame
 function displayTeamLineup(teamId, side = 'home') {
   const team = teamsData[String(teamId)] || Object.values(teamsData).find(t => String(t.teamId) === String(teamId));
   if (!team || !team.lineup) return;
 
-  // 1. Header Details (Real Logo + Side Status)
+  currentDisplayedSide = side;
+
+  // Header Details
   const logoEl = document.getElementById('displayTeamLogo');
   logoEl.src = `${CONFIG.clubsPath}${team.teamCode}.png`;
   logoEl.onerror = () => { logoEl.style.display = 'none'; };
@@ -117,7 +114,7 @@ function displayTeamLineup(teamId, side = 'home') {
   document.getElementById('displayTeamStatus').textContent = side === 'home' ? 'HOME LINEUP' : 'AWAY LINEUP';
   document.getElementById('displayFormation').textContent = team.formation;
 
-  // 2. Pitch Players Render
+  // Pitch Field Rendering
   const pitchEl = document.getElementById('pitchSurface');
   pitchEl.innerHTML = '';
 
@@ -135,6 +132,8 @@ function displayTeamLineup(teamId, side = 'home') {
       const isGK = player.pos === 'GK' || player.role === 'GK';
       const slot = document.createElement('div');
       slot.className = 'player-slot';
+      
+      // Strict clean template literals (Eliminating any stray slash/arrow)
       slot.innerHTML = `
         <div class="jersey-icon-box">
           ${getPlayerKitHtml(team.teamCode, isGK)}
@@ -151,9 +150,13 @@ function displayTeamLineup(teamId, side = 'home') {
   });
 }
 
-// Auto Rotation (10 Seconds Interval)
+// 10-Second Auto Switch Loop
 function startAutoRotation() {
-  if (autoSwitchTimer) clearInterval(autoSwitchTimer);
+  if (autoSwitchTimer) {
+    clearInterval(autoSwitchTimer);
+    autoSwitchTimer = null;
+  }
+  
   if (!isAutoSwitchEnabled) return;
 
   autoSwitchTimer = setInterval(() => {
@@ -161,13 +164,11 @@ function startAutoRotation() {
     const awayId = document.getElementById('awaySelect').value;
 
     if (currentDisplayedSide === 'home') {
-      currentDisplayedSide = 'away';
       displayTeamLineup(awayId, 'away');
     } else {
-      currentDisplayedSide = 'home';
       displayTeamLineup(homeId, 'home');
     }
-  }, 10000);
+  }, 10000); // exactly 10s switch
 }
 
 // Update Scoreboard HUD at Bottom Center
@@ -193,7 +194,7 @@ function updateBottomScoreboard() {
   document.getElementById('hudAwayGoals').textContent = awayScore;
 }
 
-// Match Timer Functions
+// Match Clock Controls
 function formatClock(totalSec) {
   const m = Math.floor(totalSec / 60);
   const s = totalSec % 60;
@@ -259,15 +260,17 @@ function setupEvents() {
 
   homeSelect.addEventListener('change', () => {
     updateBottomScoreboard();
-    if (currentDisplayedSide === 'home') displayTeamLineup(homeSelect.value, 'home');
+    displayTeamLineup(homeSelect.value, 'home');
+    startAutoRotation();
   });
 
   awaySelect.addEventListener('change', () => {
     updateBottomScoreboard();
-    if (currentDisplayedSide === 'away') displayTeamLineup(awaySelect.value, 'away');
+    displayTeamLineup(awaySelect.value, 'away');
+    startAutoRotation();
   });
 
-  // Score Steppers
+  // Score Controls
   document.getElementById('btnHomeScoreAdd').addEventListener('click', () => { homeScore++; updateBottomScoreboard(); });
   document.getElementById('btnHomeScoreSub').addEventListener('click', () => { if (homeScore > 0) homeScore--; updateBottomScoreboard(); });
   document.getElementById('btnAwayScoreAdd').addEventListener('click', () => { awayScore++; updateBottomScoreboard(); });
@@ -286,22 +289,25 @@ function setupEvents() {
     updateClockHUD();
   });
 
-  // Toggle Auto Switching
+  // Auto Switch Button
   const autoBtn = document.getElementById('btnAutoSwitchToggle');
   autoBtn.addEventListener('click', () => {
     isAutoSwitchEnabled = !isAutoSwitchEnabled;
     autoBtn.classList.toggle('active', isAutoSwitchEnabled);
     autoBtn.textContent = isAutoSwitchEnabled ? 'Auto: ON (10s)' : 'Auto: OFF';
-    if (isAutoSwitchEnabled) startAutoRotation();
-    else clearInterval(autoSwitchTimer);
+    if (isAutoSwitchEnabled) {
+      startAutoRotation();
+    } else {
+      clearInterval(autoSwitchTimer);
+      autoSwitchTimer = null;
+    }
   });
 
-  // Hide Top Streamer Control Bar
+  // Hide Controls Bar for OBS
   document.getElementById('btnHideControlBar').addEventListener('click', () => {
     document.getElementById('streamerDashboard').classList.toggle('hidden');
   });
 
-  // URL Parameter auto-hide check (?controls=false)
   const params = new URLSearchParams(window.location.search);
   if (params.get('controls') === 'false') {
     document.getElementById('streamerDashboard').classList.add('hidden');
@@ -327,10 +333,10 @@ function initDropdowns() {
 
   updateBottomScoreboard();
   displayTeamLineup(homeSelect.value, 'home');
-  startAutoRotation();
+  startAutoRotation(); // Boot Auto Rotation immediately
 }
 
-// Bootstrapper
+// App Bootstrapper
 async function initApp() {
   setupEvents();
   updateClockHUD();
