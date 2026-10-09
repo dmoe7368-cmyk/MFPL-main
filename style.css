@@ -1,0 +1,386 @@
+/* ==========================================================================
+   SPORTS UI & OBS BROADCAST STYLESHEET
+   ========================================================================== */
+
+:root {
+  --primary-color: #2563EB;
+  --gold-accent: #F59E0B;
+  --bg-dark-glass: rgba(10, 15, 29, 0.82);
+  --border-light: rgba(255, 255, 255, 0.14);
+  --text-pure: #FFFFFF;
+  --text-muted: #94A3B8;
+  --pitch-grass: radial-gradient(circle at center, rgba(16, 44, 28, 0.95) 0%, rgba(6, 21, 13, 0.98) 100%);
+  --pitch-line: rgba(255, 255, 255, 0.22);
+  
+  --font-main: 'Plus Jakarta Sans', sans-serif;
+  --font-digital: 'Teko', sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+/* OBS Transparent Window */
+body.obs-transparent {
+  background-color: transparent !important;
+  color: var(--text-pure);
+  font-family: var(--font-main);
+  height: 100vh;
+  width: 100vw;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Streamer Dashboard Control Bar */
+.controller-hub {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: rgba(15, 23, 42, 0.96);
+  border-bottom: 1px solid var(--border-light);
+  padding: 8px 24px;
+  z-index: 999;
+}
+
+.controller-hub.hidden {
+  display: none !important;
+}
+
+.control-unit {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.control-unit label {
+  font-size: 0.75rem;
+  font-weight: 700;
+  color: var(--text-muted);
+  text-transform: uppercase;
+}
+
+select {
+  background: #1E293B;
+  border: 1px solid var(--border-light);
+  color: #FFF;
+  padding: 6px 10px;
+  border-radius: 6px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  outline: none;
+}
+
+.score-stepper {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.score-stepper button {
+  background: #334155;
+  border: 1px solid var(--border-light);
+  color: #FFF;
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.stepper-val {
+  min-width: 18px;
+  text-align: center;
+  font-weight: 700;
+}
+
+.timer-control-unit {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.timer-inputs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.timer-inputs input {
+  width: 48px;
+  background: #1E293B;
+  border: 1px solid var(--border-light);
+  color: #FFF;
+  text-align: center;
+  padding: 4px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.btn-action {
+  background: var(--primary-color);
+  border: none;
+  color: #FFF;
+  padding: 6px 14px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.btn-secondary {
+  background: #475569;
+}
+
+.btn-toggle {
+  background: #1E293B;
+  border: 1px solid var(--border-light);
+  color: #CBD5E1;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 0.75rem;
+}
+
+/* ==========================================================================
+   LIVE SCOREBOARD HEADER (Broadcast HUD)
+   ========================================================================== */
+.live-scoreboard-bar {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 24px;
+  padding: 10px 0;
+  z-index: 10;
+}
+
+.sb-team {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: var(--bg-dark-glass);
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  padding: 8px 18px;
+  border-radius: 12px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.sb-badge {
+  font-family: var(--font-digital);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--gold-accent);
+  letter-spacing: 1px;
+}
+
+.sb-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+}
+
+.sb-score {
+  font-family: var(--font-digital);
+  font-size: 2.2rem;
+  font-weight: 700;
+  min-width: 28px;
+  text-align: center;
+  line-height: 1;
+}
+
+.sb-clock-center {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #0F172A;
+  border: 1px solid var(--border-light);
+  padding: 6px 20px;
+  border-radius: 12px;
+  box-shadow: 0 8px 20px rgba(0, 0, 0, 0.5);
+}
+
+.clock-display {
+  font-family: var(--font-digital);
+  font-size: 2.2rem;
+  font-weight: 700;
+  color: #38BDF8;
+  letter-spacing: 2px;
+  line-height: 1;
+}
+
+.match-status-badge {
+  font-size: 0.65rem;
+  font-weight: 800;
+  color: var(--text-muted);
+  letter-spacing: 1px;
+}
+
+/* ==========================================================================
+   TACTICAL FIELD CONTAINER & PITCH
+   ========================================================================== */
+.arena-grid {
+  flex: 1;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 20px;
+  padding: 10px 24px 20px 24px;
+}
+
+.tactical-card {
+  background: var(--bg-dark-glass);
+  border: 1px solid var(--border-light);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  padding: 14px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.5);
+}
+
+.card-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding-bottom: 8px;
+  border-bottom: 1px solid var(--border-light);
+}
+
+.card-meta-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.meta-badge {
+  font-family: var(--font-digital);
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--gold-accent);
+}
+
+.meta-name {
+  font-size: 1.15rem;
+  font-weight: 800;
+}
+
+.meta-formation {
+  background: rgba(37, 99, 235, 0.25);
+  border: 1px solid rgba(37, 99, 235, 0.5);
+  color: #60A5FA;
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 2px 10px;
+  border-radius: 10px;
+}
+
+.tactical-pitch {
+  position: relative;
+  flex: 1;
+  margin-top: 10px;
+  border-radius: 12px;
+  background: var(--pitch-grass);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 14px 8px;
+  overflow: hidden;
+  box-shadow: inset 0 0 35px rgba(0, 0, 0, 0.6);
+}
+
+/* Pitch Tactical Markings */
+.tactical-pitch::before {
+  content: "";
+  position: absolute;
+  inset: 8px;
+  border: 1.5px solid var(--pitch-line);
+  border-radius: 6px;
+  pointer-events: none;
+}
+
+.tactical-pitch::after {
+  content: "";
+  position: absolute;
+  top: 50%;
+  left: 8px;
+  right: 8px;
+  height: 1.5px;
+  background: var(--pitch-line);
+  pointer-events: none;
+}
+
+.pitch-row {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  width: 100%;
+  z-index: 2;
+}
+
+/* ==========================================================================
+   PLAYER ICON & JERSEY BADGES
+   ========================================================================== */
+.player-slot {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  animation: fadeInPlayer 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
+}
+
+.jersey-box {
+  position: relative;
+  width: 42px;
+  height: 42px;
+  filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.5));
+}
+
+.jersey-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.role-tag {
+  position: absolute;
+  top: -4px;
+  right: -8px;
+  font-size: 0.58rem;
+  background: #020617;
+  color: #F8FAFC;
+  border: 1px solid var(--border-light);
+  padding: 1px 4px;
+  border-radius: 4px;
+  font-weight: 700;
+}
+
+.name-plate {
+  margin-top: 3px;
+  background: rgba(0, 0, 0, 0.75);
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 2px 6px;
+  border-radius: 5px;
+  backdrop-filter: blur(4px);
+}
+
+.player-name-text {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #FFFFFF;
+  white-space: nowrap;
+}
+
+@keyframes fadeInPlayer {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
