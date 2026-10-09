@@ -4,19 +4,19 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Live Watch-Along Dual Lineups & Match HUD</title>
-  
-  <!-- Modern Sports Typography -->
+
+  <!-- Google Fonts: Display & UI -->
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@500;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
-  
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="obs-transparent">
 
-  <!-- Streamer Match Control Bar (Can be hidden during live stream) -->
+  <!-- Streamer Match Control Bar -->
   <header class="controller-hub" id="controllerHub">
-    <!-- Home Team Select & Score -->
+    <!-- Home Team Selection & Goals -->
     <div class="control-unit">
       <label for="homeTeamSelect">Home Team</label>
       <select id="homeTeamSelect" aria-label="Select Home Team"></select>
@@ -27,7 +27,7 @@
       </div>
     </div>
 
-    <!-- Central Match Timer Control -->
+    <!-- Match Timer Dashboard Controller -->
     <div class="timer-control-unit">
       <div class="timer-inputs">
         <input type="number" id="manualMin" min="0" max="130" value="0" aria-label="Minutes">
@@ -40,7 +40,7 @@
       </div>
     </div>
 
-    <!-- Away Team Select & Score -->
+    <!-- Away Team Selection & Goals -->
     <div class="control-unit">
       <label for="awayTeamSelect">Away Team</label>
       <select id="awayTeamSelect" aria-label="Select Away Team"></select>
@@ -54,7 +54,7 @@
     <button type="button" id="toggleHudBtn" class="btn-toggle">Hide Controls</button>
   </header>
 
-  <!-- Live Broadcast HUD Header (Visible to Viewers) -->
+  <!-- Live Broadcast HUD Scoreboard -->
   <section class="live-scoreboard-bar">
     <div class="sb-team sb-home">
       <span class="sb-badge" id="hudHomeBadge">ARS</span>
@@ -74,9 +74,9 @@
     </div>
   </section>
 
-  <!-- Dual Tactical Pitch Stage -->
+  <!-- Dual Tactical Pitch Area -->
   <main class="arena-grid">
-    <!-- Home Team Tactical Pitch -->
+    <!-- Home Team Card -->
     <article class="tactical-card" id="homeCard">
       <div class="card-meta">
         <div class="card-meta-title">
@@ -86,11 +86,11 @@
         <span class="meta-formation" id="cardHomeFormation">4-2-3-1</span>
       </div>
       <div class="tactical-pitch" id="homePitchSurface">
-        <!-- Injected via lineup.js -->
+        <!-- Players loaded via lineup.js -->
       </div>
     </article>
 
-    <!-- Away Team Tactical Pitch -->
+    <!-- Away Team Card -->
     <article class="tactical-card" id="awayCard">
       <div class="card-meta">
         <div class="card-meta-title">
@@ -100,7 +100,7 @@
         <span class="meta-formation" id="cardAwayFormation">3-4-2-1</span>
       </div>
       <div class="tactical-pitch" id="awayPitchSurface">
-        <!-- Injected via lineup.js -->
+        <!-- Players loaded via lineup.js -->
       </div>
     </article>
   </main>
