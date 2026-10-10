@@ -14,12 +14,19 @@
 </head>
 <body class="obs-transparent-layer">
 
-  <!-- Streamer Operational Dashboard (Safe Interactive Layer) -->
+  <!-- Streamer Operational Dashboard (Safe Interactive Top Layer) -->
   <header class="streamer-dashboard" id="streamerDashboard">
-    <!-- Home Team -->
+    
+    <!-- Home Team Custom Dropdown & Score -->
     <div class="dash-block">
-      <label for="homeSelect">Home</label>
-      <select id="homeSelect" class="obs-interactive-select" aria-label="Home Team Select"></select>
+      <label>Home</label>
+      <div class="custom-dropdown" id="homeDropdownWrap">
+        <button type="button" class="dropdown-trigger" id="homeDropdownBtn" aria-expanded="false">
+          <span class="trigger-label" id="homeDropdownLabel">Arsenal (4-2-3-1)</span>
+          <span class="arrow-icon">▾</span>
+        </button>
+        <div class="dropdown-menu" id="homeDropdownMenu" role="listbox"></div>
+      </div>
       <div class="score-adjust">
         <button type="button" id="btnHomeScoreSub">-</button>
         <span id="ctrlHomeScore">0</span>
@@ -36,10 +43,16 @@
       <button type="button" id="btnClockReset" class="btn-secondary">Reset</button>
     </div>
 
-    <!-- Away Team -->
+    <!-- Away Team Custom Dropdown & Score -->
     <div class="dash-block">
-      <label for="awaySelect">Away</label>
-      <select id="awaySelect" class="obs-interactive-select" aria-label="Away Team Select"></select>
+      <label>Away</label>
+      <div class="custom-dropdown" id="awayDropdownWrap">
+        <button type="button" class="dropdown-trigger" id="awayDropdownBtn" aria-expanded="false">
+          <span class="trigger-label" id="awayDropdownLabel">Chelsea (3-4-2-1)</span>
+          <span class="arrow-icon">▾</span>
+        </button>
+        <div class="dropdown-menu" id="awayDropdownMenu" role="listbox"></div>
+      </div>
       <div class="score-adjust">
         <button type="button" id="btnAwayScoreSub">-</button>
         <span id="ctrlAwayScore">0</span>
@@ -54,13 +67,13 @@
     </div>
   </header>
 
-  <!-- Broadcast Stage Layout (Explicitly isolated to prevent click hijacking) -->
+  <!-- Broadcast Stage Layout (Click-Through Safe) -->
   <main class="broadcast-viewport" id="broadcastViewport">
     
-    <!-- LEFT SIDE: Streamer Facecam / Virtual Studio Area (100% Transparent, Click-Through) -->
+    <!-- LEFT SIDE: Streamer Facecam / Virtual Studio Area (100% Transparent) -->
     <section class="streamer-cam-zone" aria-label="Streamer Cam Space"></section>
 
-    <!-- RIGHT SIDE: Tactical Lineup Frame -->
+    <!-- RIGHT SIDE: Single Tactical Lineup Frame -->
     <aside class="tactical-hud-zone" aria-label="Tactical Lineup Frame">
       <div class="lineup-frame-card">
         <div class="frame-header">
