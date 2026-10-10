@@ -34,7 +34,7 @@ html, body {
 }
 
 /* ==========================================================================
-   STREAMER CONTROLLER (Guaranteed Interactive Top Z-Index)
+   STREAMER CONTROLLER TOP BAR (High Z-Index, Unblocked Mouse Events)
    ========================================================================== */
 .streamer-dashboard {
   position: absolute;
@@ -48,10 +48,10 @@ html, body {
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  z-index: 99999 !important; /* Top-most layer to eliminate click interception */
-  backdrop-filter: blur(20px);
-  -webkit-backdrop-filter: blur(20px);
-  pointer-events: auto !important; /* Forces OBS mouse event reception */
+  z-index: 999999 !important; /* Top-most layer in OBS DOM */
+  backdrop-filter: blur(24px);
+  -webkit-backdrop-filter: blur(24px);
+  pointer-events: auto !important;
 }
 
 .streamer-dashboard.hidden {
@@ -62,6 +62,7 @@ html, body {
   display: flex;
   align-items: center;
   gap: 8px;
+  position: relative;
 }
 
 .dash-block label {
@@ -71,36 +72,98 @@ html, body {
   text-transform: uppercase;
 }
 
-/* OBS CEF-Friendly Native Select Dropdown */
-.obs-interactive-select {
-  appearance: menulist !important;
-  -webkit-appearance: menulist !important;
-  -moz-appearance: menulist !important;
-  background: #1E293B !important;
-  color: #FFFFFF !important;
-  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
-  padding: 6px 10px !important;
-  border-radius: 8px !important;
-  font-size: 0.85rem !important;
-  font-weight: 700 !important;
-  cursor: pointer !important;
-  outline: none !important;
-  pointer-events: auto !important;
-  min-width: 175px;
+/* ==========================================================================
+   CUSTOM DROPDOWN COMPONENT (OBS CEF Guaranteed Interaction)
+   ========================================================================== */
+.custom-dropdown {
+  position: relative;
+  min-width: 180px;
 }
 
-.obs-interactive-select:focus {
-  border-color: #38BDF8 !important;
-  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35) !important;
+.dropdown-trigger {
+  width: 100%;
+  background: #1E293B;
+  color: #FFFFFF;
+  border: 1.5px solid rgba(255, 255, 255, 0.22);
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  outline: none;
+  transition: all 0.2s ease;
 }
 
-.obs-interactive-select option {
-  background-color: #0F172A !important;
-  color: #FFFFFF !important;
-  padding: 8px;
-  font-weight: 600;
+.dropdown-trigger:hover,
+.dropdown-trigger:focus {
+  border-color: #38BDF8;
+  background: #283548;
 }
 
+.trigger-label {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 150px;
+}
+
+.arrow-icon {
+  font-size: 0.75rem;
+  color: #94A3B8;
+  transition: transform 0.2s ease;
+}
+
+.custom-dropdown.open .arrow-icon {
+  transform: rotate(180deg);
+}
+
+.dropdown-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  width: 220px;
+  max-height: 280px;
+  background: #0F172A;
+  border: 1.5px solid rgba(255, 255, 255, 0.25);
+  border-radius: 10px;
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.85);
+  overflow-y: auto;
+  overflow-x: hidden;
+  display: none;
+  z-index: 1000000 !important;
+  padding: 4px;
+}
+
+.custom-dropdown.open .dropdown-menu {
+  display: block !important;
+}
+
+.dropdown-item {
+  padding: 8px 12px;
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #E2E8F0;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: background 0.15s ease;
+  white-space: nowrap;
+}
+
+.dropdown-item:hover {
+  background: #2563EB;
+  color: #FFFFFF;
+}
+
+.dropdown-item.active {
+  background: rgba(37, 99, 235, 0.3);
+  color: #38BDF8;
+  border-left: 3px solid #38BDF8;
+}
+
+/* Score Adjust Buttons */
 .score-adjust {
   display: inline-flex;
   align-items: center;
@@ -116,7 +179,7 @@ html, body {
   border-radius: 6px;
   font-weight: 800;
   cursor: pointer;
-  pointer-events: auto;
+  outline: none;
 }
 
 .score-adjust button:hover {
@@ -129,6 +192,7 @@ html, body {
   font-weight: 800;
 }
 
+/* Timer Hub */
 .timer-hub input {
   width: 44px;
   background: #1E293B;
@@ -138,7 +202,7 @@ html, body {
   padding: 4px;
   border-radius: 6px;
   font-weight: 800;
-  pointer-events: auto;
+  outline: none;
 }
 
 .btn-primary {
@@ -150,7 +214,6 @@ html, body {
   font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
-  pointer-events: auto;
 }
 
 .btn-secondary {
@@ -161,7 +224,6 @@ html, body {
   border-radius: 6px;
   font-size: 0.8rem;
   cursor: pointer;
-  pointer-events: auto;
 }
 
 .btn-toggle {
@@ -173,7 +235,6 @@ html, body {
   font-size: 0.78rem;
   cursor: pointer;
   font-weight: 700;
-  pointer-events: auto;
 }
 
 .btn-toggle.active {
@@ -183,7 +244,7 @@ html, body {
 }
 
 /* ==========================================================================
-   BROADCAST VIEWPORT (Click-Through Safe Layout)
+   BROADCAST VIEWPORT (Click-Through Isolation)
    ========================================================================== */
 .broadcast-viewport {
   position: absolute;
@@ -196,23 +257,22 @@ html, body {
   gap: 28px;
   padding: 16px 28px 10px 28px;
   z-index: 10;
-  pointer-events: none; /* Allows clicks to bypass empty transparent layout areas */
+  pointer-events: none !important; /* Critical: Bypasses clicks to let header work */
 }
 
-/* Streamer Cam Zone */
 .streamer-cam-zone {
   background: transparent !important;
   pointer-events: none !important;
 }
 
-/* Tactical HUD Card (Re-enable pointer events only for the card itself) */
 .tactical-hud-zone {
   display: flex;
   flex-direction: column;
   height: 100%;
-  pointer-events: auto;
+  pointer-events: auto !important;
 }
 
+/* Lineup Frame */
 .lineup-frame-card {
   flex: 1;
   background: var(--glass-hud-bg);
@@ -282,7 +342,7 @@ html, body {
   border-radius: 12px;
 }
 
-/* Tactical Pitch */
+/* Deep Emerald Pitch Surface */
 .pitch-container {
   position: relative;
   flex: 1;
@@ -396,7 +456,7 @@ html, body {
   padding: 6px 20px;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
   z-index: 100;
-  pointer-events: auto;
+  pointer-events: auto !important;
 }
 
 .score-team-cell {
