@@ -10,16 +10,16 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@600;700;800&family=Teko:wght@600;700&display=swap" rel="stylesheet">
 
-  <!-- Root Stylesheet -->
   <link rel="stylesheet" href="style.css">
 </head>
 <body class="obs-transparent-layer">
 
-  <!-- Streamer Operational Dashboard (Can be hidden during live stream) -->
+  <!-- Streamer Operational Dashboard (Safe Interactive Layer) -->
   <header class="streamer-dashboard" id="streamerDashboard">
+    <!-- Home Team -->
     <div class="dash-block">
       <label for="homeSelect">Home</label>
-      <select id="homeSelect" aria-label="Home Team Select"></select>
+      <select id="homeSelect" class="obs-interactive-select" aria-label="Home Team Select"></select>
       <div class="score-adjust">
         <button type="button" id="btnHomeScoreSub">-</button>
         <span id="ctrlHomeScore">0</span>
@@ -36,9 +36,10 @@
       <button type="button" id="btnClockReset" class="btn-secondary">Reset</button>
     </div>
 
+    <!-- Away Team -->
     <div class="dash-block">
       <label for="awaySelect">Away</label>
-      <select id="awaySelect" aria-label="Away Team Select"></select>
+      <select id="awaySelect" class="obs-interactive-select" aria-label="Away Team Select"></select>
       <div class="score-adjust">
         <button type="button" id="btnAwayScoreSub">-</button>
         <span id="ctrlAwayScore">0</span>
@@ -46,24 +47,22 @@
       </div>
     </div>
 
-    <div class="dash-block">
+    <!-- Utility Toggles -->
+    <div class="dash-block actions-hub">
       <button type="button" id="btnAutoSwitchToggle" class="btn-toggle active">Auto: ON (10s)</button>
       <button type="button" id="btnHideControlBar" class="btn-toggle">Hide Controls</button>
     </div>
   </header>
 
-  <!-- Broadcast Stage Layout -->
-  <div class="broadcast-viewport">
+  <!-- Broadcast Stage Layout (Explicitly isolated to prevent click hijacking) -->
+  <main class="broadcast-viewport" id="broadcastViewport">
     
-    <!-- LEFT SIDE: Streamer Facecam / Virtual Studio Area (100% Alpha Transparent) -->
-    <section class="streamer-cam-zone" aria-label="Streamer Cam Space">
-      <!-- Empty transparent space for live camera feed below in OBS -->
-    </section>
+    <!-- LEFT SIDE: Streamer Facecam / Virtual Studio Area (100% Transparent, Click-Through) -->
+    <section class="streamer-cam-zone" aria-label="Streamer Cam Space"></section>
 
-    <!-- RIGHT SIDE: Single Auto-Switching Tactical Pitch Frame -->
+    <!-- RIGHT SIDE: Tactical Lineup Frame -->
     <aside class="tactical-hud-zone" aria-label="Tactical Lineup Frame">
       <div class="lineup-frame-card">
-        <!-- Team Card Header with Real Club Logo -->
         <div class="frame-header">
           <div class="team-title-wrap">
             <div class="logo-box">
@@ -77,31 +76,27 @@
           <div class="formation-badge" id="displayFormation">4-2-3-1</div>
         </div>
 
-        <!-- Tactical Pitch Field -->
         <div class="pitch-container" id="pitchSurface">
-          <!-- Tactical tiers injected via lineup.js -->
+          <!-- Injected via lineup.js -->
         </div>
       </div>
     </aside>
 
-  </div>
+  </main>
 
   <!-- BOTTOM CENTER: Live Match Goals & Minutes HUD -->
   <footer class="bottom-scoreboard-center" id="liveScoreboardHud">
-    <!-- Home Team Cell -->
     <div class="score-team-cell home-cell">
       <img id="hudHomeLogo" src="assets/images/clubs/ars.png" alt="Home Logo" class="hud-mini-logo">
       <span class="hud-team-name" id="hudHomeName">Arsenal</span>
       <span class="hud-goal-number" id="hudHomeGoals">0</span>
     </div>
 
-    <!-- Match Clock Center -->
     <div class="score-clock-cell">
       <div class="hud-time-val" id="hudMatchClock">00:00</div>
       <div class="hud-period" id="hudMatchPeriod">1ST HALF</div>
     </div>
 
-    <!-- Away Team Cell -->
     <div class="score-team-cell away-cell">
       <span class="hud-goal-number" id="hudAwayGoals">0</span>
       <span class="hud-team-name" id="hudAwayName">Chelsea</span>
