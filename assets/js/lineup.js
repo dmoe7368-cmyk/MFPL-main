@@ -1,7 +1,10 @@
 /**
  * Watch-Along Live Broadcast Engine
- * Clean Production Build: Native DOM Image Handling (Zero Syntax Leaks), 
- * 10s Auto-Rotation & 5-Tier Tactical Alignment
+ * Clean Production Build: 
+ * - Full State Persistence (localStorage auto-recovery on refresh)
+ * - Anti-Accidental Refresh Guard (beforeunload protection)
+ * - Native DOM Image Handling (Zero Syntax Leaks)
+ * - 10s Auto-Rotation & 5-Tier Tactical Alignment
  */
 
 const CONFIG = {
@@ -9,6 +12,17 @@ const CONFIG = {
   clubsPath: 'assets/images/clubs/',
   outfieldKitPath: 'assets/images/jerseys/outfield/',
   gkKitPath: 'assets/images/jerseys/gk/'
+};
+
+// Storage Keys for Stream State Persistence
+const STORAGE_KEYS = {
+  MATCH_TIME: 'mfpl_match_seconds',
+  TIMER_RUNNING: 'mfpl_timer_running',
+  HOME_SCORE: 'mfpl_home_score',
+  AWAY_SCORE: 'mfpl_away_score',
+  HOME_TEAM_ID: 'mfpl_home_team_id',
+  AWAY_TEAM_ID: 'mfpl_away_team_id',
+  LAST_UPDATE: 'mfpl_last_timestamp'
 };
 
 let teamsData = {};
@@ -46,6 +60,60 @@ const TEAM_COLORS = {
   tot: { primary: '#132257', secondary: '#FFFFFF', gk: '#2ED573' },
   sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
 };
+
+// ==========================================
+// STATE PERSISTENCE & STORAGE MANAGEMENT
+// ==========================================
+function saveBroadcastState() {
+  localStorage.setItem(STORAGE_KEYS.MATCH_TIME, String(matchSeconds));
+  localStorage.setItem(STORAGE_KEYS.TIMER_RUNNING, String(isTimerRunning));
+  localStorage.setItem(STORAGE_KEYS.HOME_SCORE, String(homeScore));
+  localStorage.setItem(STORAGE_KEYS.AWAY_SCORE, String(awayScore));
+  localStorage.setItem(STORAGE_KEYS.LAST_UPDATE, String(Date.now()));
+
+  const homeSelect = document.getElementById('homeSelect');
+  const awaySelect = document.getElementById('awaySelect');
+  if (homeSelect) localStorage.setItem(STORAGE_KEYS.HOME_TEAM_ID, homeSelect.value);
+  if (awaySelect) localStorage.setItem(STORAGE_KEYS.AWAY_TEAM_ID, awaySelect.value);
+}
+
+function loadBroadcastState() {
+  const savedTime = localStorage.getItem(STORAGE_KEYS.MATCH_TIME);
+  const wasRunning = localStorage.getItem(STORAGE_KEYS.TIMER_RUNNING) === 'true';
+  const lastTime = parseInt(localStorage.getItem(STORAGE_KEYS.LAST_UPDATE) || '0', 10);
+  const savedHomeScore = localStorage.getItem(STORAGE_KEYS.HOME_SCORE);
+  const savedAwayScore = localStorage.getItem(STORAGE_KEYS.AWAY_SCORE);
+
+  if (savedHomeScore !== null) homeScore = parseInt(savedHomeScore, 10) || 0;
+  if (savedAwayScore !== null) awayScore = parseInt(savedAwayScore, 10) || 0;
+
+  if (savedTime !== null) {
+    let recoveredSeconds = parseInt(savedTime, 10) || 0;
+
+    // Refresh ဖြစ်သွားချိန် ကြားကာလစက္ကန့်များကို Timer ပြေးနေပါက auto-catchup တွက်ချက်ခြင်း
+    if (wasRunning && lastTime > 0) {
+      const elapsedSeconds = Math.floor((Date.now() - lastTime) / 1000);
+      recoveredSeconds += Math.max(0, elapsedSeconds);
+    }
+
+    matchSeconds = recoveredSeconds;
+
+    // Timer ပြေးနေခဲ့ပါက refresh အပြီး auto resume ပြန်လုပ်ခြင်း
+    if (wasRunning) {
+      setTimeout(() => {
+        if (!isTimerRunning) toggleClock();
+      }, 300);
+    }
+  }
+}
+
+function clearBroadcastState() {
+  localStorage.removeItem(STORAGE_KEYS.MATCH_TIME);
+  localStorage.removeItem(STORAGE_KEYS.TIMER_RUNNING);
+  localStorage.removeItem(STORAGE_KEYS.HOME_SCORE);
+  localStorage.removeItem(STORAGE_KEYS.AWAY_SCORE);
+  localStorage.removeItem(STORAGE_KEYS.LAST_UPDATE);
+}
 
 // 5-Tier Tactical Formation Tier Sorter
 function groupLineupByTier(lineup) {
@@ -241,6 +309,8 @@ function updateBottomScoreboard() {
   const hudAway = document.getElementById('hudAwayGoals');
   if (ctrlAway) ctrlAway.textContent = awayScore;
   if (hudAway) hudAway.textContent = awayScore;
+
+  saveBroadcastState();
 }
 
 // Match Timer Functions
@@ -253,6 +323,11 @@ function formatClock(totalSec) {
 function updateClockHUD() {
   const clockEl = document.getElementById('hudMatchClock');
   if (clockEl) clockEl.textContent = formatClock(matchSeconds);
+
+  const inM = document.getElementById('inputClockMin');
+  const inS = document.getElementById('inputClockSec');
+  if (inM && !isTimerRunning) inM.value = Math.floor(matchSeconds / 60);
+  if (inS && !isTimerRunning) inS.value = matchSeconds % 60;
 
   const periodBadge = document.getElementById('hudMatchPeriod');
   if (periodBadge) {
@@ -268,16 +343,18 @@ function updateClockHUD() {
 
 function toggleClock() {
   const btn = document.getElementById('btnClockToggle');
-  if (!btn) return;
 
   if (isTimerRunning) {
     clearInterval(timerInterval);
     isTimerRunning = false;
-    btn.textContent = 'Start';
-    btn.classList.remove('btn-secondary');
+    if (btn) {
+      btn.textContent = 'Start';
+      btn.classList.remove('btn-secondary');
+    }
+    saveBroadcastState();
   } else {
-    const inputM = parseInt(document.getElementById('inputClockMin')?.value) || 0;
-    const inputS = parseInt(document.getElementById('inputClockSec')?.value) || 0;
+    const inputM = parseInt(document.getElementById('inputClockMin')?.value, 10) || 0;
+    const inputS = parseInt(document.getElementById('inputClockSec')?.value, 10) || 0;
 
     if (matchSeconds === 0 && (inputM > 0 || inputS > 0)) {
       matchSeconds = (inputM * 60) + inputS;
@@ -286,15 +363,15 @@ function toggleClock() {
     timerInterval = setInterval(() => {
       matchSeconds++;
       updateClockHUD();
-      const inM = document.getElementById('inputClockMin');
-      const inS = document.getElementById('inputClockSec');
-      if (inM) inM.value = Math.floor(matchSeconds / 60);
-      if (inS) inS.value = matchSeconds % 60;
+      saveBroadcastState();
     }, 1000);
 
     isTimerRunning = true;
-    btn.textContent = 'Pause';
-    btn.classList.add('btn-secondary');
+    if (btn) {
+      btn.textContent = 'Pause';
+      btn.classList.add('btn-secondary');
+    }
+    saveBroadcastState();
   }
 }
 
@@ -313,9 +390,10 @@ function resetClock() {
     btn.classList.remove('btn-secondary');
   }
   updateClockHUD();
+  saveBroadcastState();
 }
 
-// Event Bindings
+// User Action Handlers & Event Setup
 function setupEvents() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
@@ -325,6 +403,7 @@ function setupEvents() {
       updateBottomScoreboard();
       displayTeamLineup(homeSelect.value, 'home');
       startAutoRotation();
+      saveBroadcastState();
     });
   }
 
@@ -333,6 +412,7 @@ function setupEvents() {
       updateBottomScoreboard();
       displayTeamLineup(awaySelect.value, 'away');
       startAutoRotation();
+      saveBroadcastState();
     });
   }
 
@@ -347,12 +427,14 @@ function setupEvents() {
   document.getElementById('btnClockReset')?.addEventListener('click', resetClock);
 
   document.getElementById('inputClockMin')?.addEventListener('change', (e) => {
-    matchSeconds = (parseInt(e.target.value) || 0) * 60 + (parseInt(document.getElementById('inputClockSec')?.value) || 0);
+    matchSeconds = (parseInt(e.target.value, 10) || 0) * 60 + (parseInt(document.getElementById('inputClockSec')?.value, 10) || 0);
     updateClockHUD();
+    saveBroadcastState();
   });
   document.getElementById('inputClockSec')?.addEventListener('change', (e) => {
-    matchSeconds = (parseInt(document.getElementById('inputClockMin')?.value) || 0) * 60 + (parseInt(e.target.value) || 0);
+    matchSeconds = (parseInt(document.getElementById('inputClockMin')?.value, 10) || 0) * 60 + (parseInt(e.target.value, 10) || 0);
     updateClockHUD();
+    saveBroadcastState();
   });
 
   // Auto Switch Button
@@ -376,6 +458,19 @@ function setupEvents() {
     document.getElementById('streamerDashboard')?.classList.toggle('hidden');
   });
 
+  // ==========================================
+  // ANTI-ACCIDENTAL REFRESH GUARD
+  // ==========================================
+  window.addEventListener('beforeunload', (e) => {
+    // Timer ပြေးနေချိန် သို့မဟုတ် ရမှတ်များ ရှိနေချိန်တွင် Refresh သို့မဟုတ် Tab ပိတ်မိပါက browser prompt ပြပေးခြင်း
+    if (isTimerRunning || matchSeconds > 0 || homeScore > 0 || awayScore > 0) {
+      e.preventDefault();
+      e.returnValue = 'Live stream is currently active. Are you sure you want to reload?';
+      return e.returnValue;
+    }
+  });
+
+  // URL Parameter check (?controls=false)
   const params = new URLSearchParams(window.location.search);
   if (params.get('controls') === 'false') {
     document.getElementById('streamerDashboard')?.classList.add('hidden');
@@ -397,8 +492,13 @@ function initDropdowns() {
   });
 
   const params = new URLSearchParams(window.location.search);
-  homeSelect.value = params.get('home') || '1';
-  awaySelect.value = params.get('away') || '6';
+  
+  // Storage တွင် သိမ်းဆည်းထားသော အသင်း ID သို့မဟုတ် URL/Default ID ဖြင့် ဦးစားပေး ခေါ်ယူခြင်း
+  const savedHome = localStorage.getItem(STORAGE_KEYS.HOME_TEAM_ID);
+  const savedAway = localStorage.getItem(STORAGE_KEYS.AWAY_TEAM_ID);
+
+  homeSelect.value = params.get('home') || savedHome || '1';
+  awaySelect.value = params.get('away') || savedAway || '6';
 
   updateBottomScoreboard();
   displayTeamLineup(homeSelect.value, 'home');
@@ -407,6 +507,7 @@ function initDropdowns() {
 
 // App Bootstrapper
 async function initApp() {
+  loadBroadcastState(); // Refresh မဖြစ်မီ သိမ်းထားသော ပွဲချိန်နှင့် ရမှတ်များ ပြန်လည်ဆွဲယူခြင်း
   setupEvents();
   updateClockHUD();
 
