@@ -11,10 +11,10 @@
       { "name": "Calafiori", "pos": "DEF", "role": "LB", "tier": "DEF", "side": "Left" },
       { "name": "Gabriel", "pos": "DEF", "role": "LCB", "tier": "DEF", "side": "Center-Left" },
       { "name": "Konsa", "pos": "DEF", "role": "RCB", "tier": "DEF", "side": "Center-Right" },
-      { "name": "Timber", "pos": "DEF", "role": "RB", "tier": "DEF", "side": "Right" },
-      { "name": "Guimarães", "pos": "MID", "role": "LDM", "tier": "DM", "side": "Center-Left" },
+      { "name": "White", "pos": "DEF", "role": "RB", "tier": "DEF", "side": "Right" },
+      { "name": "Lewis-Skelly", "pos": "MID", "role": "LDM", "tier": "DM", "side": "Center-Left" },
       { "name": "Rice", "pos": "MID", "role": "RDM", "tier": "DM", "side": "Center-Right" },
-      { "name": "Tzolis", "pos": "MID", "role": "LAM", "tier": "AM", "side": "Left" },
+      { "name": "Madueke", "pos": "MID", "role": "LAM", "tier": "AM", "side": "Left" },
       { "name": "Ødegaard", "pos": "MID", "role": "CAM", "tier": "AM", "side": "Center" },
       { "name": "Saka", "pos": "MID", "role": "RAM", "tier": "AM", "side": "Right" },
       { "name": "Havertz", "pos": "FWD", "role": "ST", "tier": "FWD", "side": "Center" }
