@@ -1,23 +1,16 @@
 /* ==========================================================================
-   PRODUCTION SPORTS BROADCAST OVERLAY STYLESHEET
+   PRODUCTION SPORTS UI & OBS INTERACTION FIX STYLESHEET
    Root Style: style.css
    ========================================================================== */
 
 :root {
   --primary-accent: #2563EB;
   --gold-accent: #F59E0B;
-  --success-color: #22C55E;
-  
-  /* Deep Emerald Pitch Palette */
+  --glass-hud-bg: rgba(10, 16, 28, 0.88);
+  --border-glass: rgba(255, 255, 255, 0.16);
   --pitch-deep-emerald: radial-gradient(circle at 50% 50%, #082d1c 0%, #03180e 100%);
   --pitch-tactical-lines: rgba(255, 255, 255, 0.28);
   
-  /* Glassmorphism Frame System */
-  --glass-card-bg: rgba(10, 16, 30, 0.88);
-  --border-glass: rgba(255, 255, 255, 0.16);
-  --border-glass-glow: rgba(56, 189, 248, 0.35);
-  
-  /* Typography */
   --font-main: 'Plus Jakarta Sans', sans-serif;
   --font-display: 'Teko', sans-serif;
 }
@@ -28,7 +21,7 @@
   padding: 0;
 }
 
-/* OBS Alpha Transparency */
+/* 100% Alpha Transparent Layer for OBS Browser Source */
 html, body {
   width: 100vw;
   height: 100vh;
@@ -41,7 +34,7 @@ html, body {
 }
 
 /* ==========================================================================
-   STREAMER CONTROLLER TOP BAR
+   STREAMER CONTROLLER (Guaranteed Interactive Top Z-Index)
    ========================================================================== */
 .streamer-dashboard {
   position: absolute;
@@ -49,15 +42,16 @@ html, body {
   left: 0;
   right: 0;
   height: 52px;
-  background: rgba(8, 14, 26, 0.96);
-  border-bottom: 1px solid var(--border-glass);
+  background: rgba(8, 14, 26, 0.98);
+  border-bottom: 1.5px solid var(--border-glass);
   display: flex;
   align-items: center;
   justify-content: space-between;
   padding: 0 24px;
-  z-index: 1000;
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
+  z-index: 99999 !important; /* Top-most layer to eliminate click interception */
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  pointer-events: auto !important; /* Forces OBS mouse event reception */
 }
 
 .streamer-dashboard.hidden {
@@ -77,16 +71,34 @@ html, body {
   text-transform: uppercase;
 }
 
-select {
-  background: #1E293B;
-  color: #FFF;
-  border: 1px solid var(--border-glass);
-  padding: 5px 10px;
-  border-radius: 8px;
-  font-size: 0.82rem;
+/* OBS CEF-Friendly Native Select Dropdown */
+.obs-interactive-select {
+  appearance: menulist !important;
+  -webkit-appearance: menulist !important;
+  -moz-appearance: menulist !important;
+  background: #1E293B !important;
+  color: #FFFFFF !important;
+  border: 1.5px solid rgba(255, 255, 255, 0.25) !important;
+  padding: 6px 10px !important;
+  border-radius: 8px !important;
+  font-size: 0.85rem !important;
+  font-weight: 700 !important;
+  cursor: pointer !important;
+  outline: none !important;
+  pointer-events: auto !important;
+  min-width: 175px;
+}
+
+.obs-interactive-select:focus {
+  border-color: #38BDF8 !important;
+  box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.35) !important;
+}
+
+.obs-interactive-select option {
+  background-color: #0F172A !important;
+  color: #FFFFFF !important;
+  padding: 8px;
   font-weight: 600;
-  outline: none;
-  cursor: pointer;
 }
 
 .score-adjust {
@@ -99,17 +111,22 @@ select {
   background: #334155;
   border: 1px solid var(--border-glass);
   color: #FFF;
-  width: 24px;
-  height: 24px;
-  border-radius: 4px;
+  width: 26px;
+  height: 26px;
+  border-radius: 6px;
   font-weight: 800;
   cursor: pointer;
+  pointer-events: auto;
+}
+
+.score-adjust button:hover {
+  background: #475569;
 }
 
 .score-adjust span {
   min-width: 16px;
   text-align: center;
-  font-weight: 700;
+  font-weight: 800;
 }
 
 .timer-hub input {
@@ -118,41 +135,45 @@ select {
   border: 1px solid var(--border-glass);
   color: #FFF;
   text-align: center;
-  padding: 3px;
-  border-radius: 4px;
-  font-weight: 700;
+  padding: 4px;
+  border-radius: 6px;
+  font-weight: 800;
+  pointer-events: auto;
 }
 
 .btn-primary {
   background: var(--primary-accent);
   color: #FFF;
   border: none;
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   font-weight: 700;
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .btn-secondary {
   background: #475569;
   color: #FFF;
   border: none;
-  padding: 5px 10px;
+  padding: 6px 12px;
   border-radius: 6px;
-  font-size: 0.78rem;
+  font-size: 0.8rem;
   cursor: pointer;
+  pointer-events: auto;
 }
 
 .btn-toggle {
   background: #1E293B;
   color: #94A3B8;
   border: 1px solid var(--border-glass);
-  padding: 5px 12px;
+  padding: 6px 14px;
   border-radius: 6px;
   font-size: 0.78rem;
   cursor: pointer;
-  font-weight: 600;
+  font-weight: 700;
+  pointer-events: auto;
 }
 
 .btn-toggle.active {
@@ -162,7 +183,7 @@ select {
 }
 
 /* ==========================================================================
-   VIEWPORT: LEFT CAM (TRANSPARENT) + RIGHT TACTICAL CARD
+   BROADCAST VIEWPORT (Click-Through Safe Layout)
    ========================================================================== */
 .broadcast-viewport {
   position: absolute;
@@ -174,23 +195,27 @@ select {
   grid-template-columns: 1.15fr 0.85fr;
   gap: 28px;
   padding: 16px 28px 10px 28px;
+  z-index: 10;
+  pointer-events: none; /* Allows clicks to bypass empty transparent layout areas */
 }
 
+/* Streamer Cam Zone */
 .streamer-cam-zone {
   background: transparent !important;
-  pointer-events: none;
+  pointer-events: none !important;
 }
 
+/* Tactical HUD Card (Re-enable pointer events only for the card itself) */
 .tactical-hud-zone {
   display: flex;
   flex-direction: column;
   height: 100%;
+  pointer-events: auto;
 }
 
-/* Sleek Premium Frame */
 .lineup-frame-card {
   flex: 1;
-  background: var(--glass-card-bg);
+  background: var(--glass-hud-bg);
   border: 1.5px solid var(--border-glass);
   border-radius: 20px;
   backdrop-filter: blur(24px);
@@ -200,11 +225,6 @@ select {
   flex-direction: column;
   padding: 16px 18px;
   overflow: hidden;
-  transition: border-color 0.3s ease;
-}
-
-.lineup-frame-card:hover {
-  border-color: var(--border-glass-glow);
 }
 
 .frame-header {
@@ -231,7 +251,6 @@ select {
   align-items: center;
   justify-content: center;
   padding: 5px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
 }
 
 .team-club-logo {
@@ -243,7 +262,6 @@ select {
 .team-heading {
   font-size: 1.35rem;
   font-weight: 800;
-  letter-spacing: 0.3px;
   line-height: 1.1;
 }
 
@@ -262,12 +280,9 @@ select {
   font-weight: 800;
   padding: 4px 12px;
   border-radius: 12px;
-  letter-spacing: 0.5px;
 }
 
-/* ==========================================================================
-   DEEP EMERALD TACTICAL PITCH SURFACE
-   ========================================================================== */
+/* Tactical Pitch */
 .pitch-container {
   position: relative;
   flex: 1;
@@ -283,7 +298,6 @@ select {
   overflow: hidden;
 }
 
-/* Crisp Broadcast Field Lines */
 .pitch-container::before {
   content: "";
   position: absolute;
@@ -312,22 +326,11 @@ select {
   z-index: 2;
 }
 
-/* Tactical Vertical Balance */
-.pitch-row-fwd { margin-top: 2px; }
-.pitch-row-am  { margin-top: 0px; }
-.pitch-row-dm  { margin-top: 0px; }
-.pitch-row-def { margin-top: 0px; }
-.pitch-row-gk  { margin-bottom: 2px; }
-
-/* ==========================================================================
-   PLAYER JERSEY & STREAMLINED NAMEPLATE (NO ARROWS)
-   ========================================================================== */
 .player-slot {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
-  animation: slotFadeIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) backwards;
 }
 
 .jersey-icon-box {
@@ -344,7 +347,6 @@ select {
   width: 100%;
   height: 100%;
   object-fit: contain;
-  display: block;
 }
 
 .role-tag {
@@ -358,20 +360,15 @@ select {
   padding: 1px 4px;
   border-radius: 4px;
   font-weight: 800;
-  letter-spacing: 0.5px;
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.5);
 }
 
-/* Professional Streamlined Nameplate Pill */
 .name-plate {
   margin-top: 4px;
   background: rgba(3, 7, 18, 0.95);
   border: 1px solid rgba(255, 255, 255, 0.2);
   padding: 2px 8px;
   border-radius: 6px;
-  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
   backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
 }
 
 .player-name-text {
@@ -379,12 +376,10 @@ select {
   font-weight: 800;
   color: #FFFFFF;
   white-space: nowrap;
-  letter-spacing: 0.3px;
-  display: block;
 }
 
 /* ==========================================================================
-   BOTTOM SCOREBOARD HUD (CENTER)
+   BOTTOM SCOREBOARD HUD
    ========================================================================== */
 .bottom-scoreboard-center {
   position: absolute;
@@ -393,7 +388,7 @@ select {
   transform: translateX(-50%);
   display: flex;
   align-items: center;
-  background: var(--glass-card-bg);
+  background: var(--glass-hud-bg);
   border: 1.5px solid var(--border-glass);
   border-radius: 18px;
   backdrop-filter: blur(24px);
@@ -401,6 +396,7 @@ select {
   padding: 6px 20px;
   box-shadow: 0 20px 48px rgba(0, 0, 0, 0.8);
   z-index: 100;
+  pointer-events: auto;
 }
 
 .score-team-cell {
@@ -439,7 +435,6 @@ select {
   border-radius: 12px;
   padding: 4px 20px;
   margin: 0 8px;
-  box-shadow: inset 0 2px 6px rgba(0, 0, 0, 0.6);
 }
 
 .hud-time-val {
@@ -456,9 +451,4 @@ select {
   font-weight: 800;
   color: #94A3B8;
   letter-spacing: 1px;
-}
-
-@keyframes slotFadeIn {
-  from { opacity: 0; transform: translateY(6px) scale(0.94); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
 }
