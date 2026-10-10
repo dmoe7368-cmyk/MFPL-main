@@ -1,10 +1,10 @@
 /**
  * Watch-Along Live Broadcast Engine
- * Clean Production Build: 
- * - Full State Persistence (localStorage auto-recovery on refresh)
- * - Anti-Accidental Refresh Guard (beforeunload protection)
- * - Native DOM Image Handling (Zero Syntax Leaks)
- * - 10s Auto-Rotation & 5-Tier Tactical Alignment
+ * Features:
+ * - Robust Click Handlers for OBS Chromium Embedded Framework
+ * - State Persistence (localStorage auto-recovery)
+ * - Anti-Accidental Refresh Guard
+ * - Native DOM Image Generation
  */
 
 const CONFIG = {
@@ -14,7 +14,6 @@ const CONFIG = {
   gkKitPath: 'assets/images/jerseys/gk/'
 };
 
-// Storage Keys for Stream State Persistence
 const STORAGE_KEYS = {
   MATCH_TIME: 'mfpl_match_seconds',
   TIMER_RUNNING: 'mfpl_timer_running',
@@ -30,14 +29,13 @@ let currentDisplayedSide = 'home';
 let autoSwitchTimer = null;
 let isAutoSwitchEnabled = true;
 
-// Match Clock & Goals State
+// Match States
 let matchSeconds = 0;
 let timerInterval = null;
 let isTimerRunning = false;
 let homeScore = 0;
 let awayScore = 0;
 
-// High-Contrast SVG Kit Fallback
 const TEAM_COLORS = {
   ars: { primary: '#EF0107', secondary: '#FFFFFF', gk: '#00FF66' },
   avl: { primary: '#95BFE5', secondary: '#670E36', gk: '#FFE600' },
@@ -61,9 +59,7 @@ const TEAM_COLORS = {
   sun: { primary: '#EB172B', secondary: '#FFFFFF', gk: '#00D2D3' }
 };
 
-// ==========================================
-// STATE PERSISTENCE & STORAGE MANAGEMENT
-// ==========================================
+// State Persistence
 function saveBroadcastState() {
   localStorage.setItem(STORAGE_KEYS.MATCH_TIME, String(matchSeconds));
   localStorage.setItem(STORAGE_KEYS.TIMER_RUNNING, String(isTimerRunning));
@@ -89,16 +85,12 @@ function loadBroadcastState() {
 
   if (savedTime !== null) {
     let recoveredSeconds = parseInt(savedTime, 10) || 0;
-
-    // Refresh ဖြစ်သွားချိန် ကြားကာလစက္ကန့်များကို Timer ပြေးနေပါက auto-catchup တွက်ချက်ခြင်း
     if (wasRunning && lastTime > 0) {
       const elapsedSeconds = Math.floor((Date.now() - lastTime) / 1000);
       recoveredSeconds += Math.max(0, elapsedSeconds);
     }
-
     matchSeconds = recoveredSeconds;
 
-    // Timer ပြေးနေခဲ့ပါက refresh အပြီး auto resume ပြန်လုပ်ခြင်း
     if (wasRunning) {
       setTimeout(() => {
         if (!isTimerRunning) toggleClock();
@@ -107,23 +99,9 @@ function loadBroadcastState() {
   }
 }
 
-function clearBroadcastState() {
-  localStorage.removeItem(STORAGE_KEYS.MATCH_TIME);
-  localStorage.removeItem(STORAGE_KEYS.TIMER_RUNNING);
-  localStorage.removeItem(STORAGE_KEYS.HOME_SCORE);
-  localStorage.removeItem(STORAGE_KEYS.AWAY_SCORE);
-  localStorage.removeItem(STORAGE_KEYS.LAST_UPDATE);
-}
-
 // 5-Tier Tactical Formation Tier Sorter
 function groupLineupByTier(lineup) {
-  const tiers = {
-    FWD: [],
-    AM: [],
-    DM: [],
-    DEF: [],
-    GK: []
-  };
+  const tiers = { FWD: [], AM: [], DM: [], DEF: [], GK: [] };
 
   lineup.forEach(player => {
     const tier = player.tier ? player.tier.toUpperCase() : '';
@@ -148,7 +126,7 @@ function groupLineupByTier(lineup) {
   return tiers;
 }
 
-// Fallback Kit Data URI
+// Fallback Kit SVG
 function getFallbackJerseySVG(teamCode, isGK = false) {
   const colors = TEAM_COLORS[teamCode] || { primary: '#2563EB', secondary: '#FFF', gk: '#10B981' };
   const baseColor = isGK ? colors.gk : colors.primary;
@@ -157,7 +135,7 @@ function getFallbackJerseySVG(teamCode, isGK = false) {
   return `data:image/svg+xml;utf8,<svg viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M30 18 L40 28 C45 32 55 32 60 28 L70 18 L88 34 L76 46 L72 38 L72 84 L28 84 L28 38 L24 46 L12 34 Z" fill="${encodeURIComponent(baseColor)}" stroke="rgba(255,255,255,0.4)" stroke-width="2.5"/><path d="M42 26 C46 30 54 30 58 26" stroke="${encodeURIComponent(stripeColor)}" stroke-width="3"/><rect x="46" y="38" width="8" height="42" fill="${encodeURIComponent(stripeColor)}" opacity="0.85" rx="2"/></svg>`;
 }
 
-// Pure DOM Image Generator: string concatenation လုံးဝမသုံးဘဲ တိုက်ရိုက် create လုပ်သည်
+// Clean DOM Image Generator
 function createPlayerKitElement(teamCode, isGK = false) {
   const img = document.createElement('img');
   img.className = 'real-kit-img';
@@ -186,7 +164,6 @@ function displayTeamLineup(teamId, side = 'home') {
 
   currentDisplayedSide = side;
 
-  // Header Details
   const logoEl = document.getElementById('displayTeamLogo');
   if (logoEl) {
     logoEl.src = `${CONFIG.clubsPath}${team.teamCode}.png`;
@@ -203,7 +180,6 @@ function displayTeamLineup(teamId, side = 'home') {
   const formEl = document.getElementById('displayFormation');
   if (formEl) formEl.textContent = team.formation;
 
-  // Pitch Field Rendering
   const pitchEl = document.getElementById('pitchSurface');
   if (!pitchEl) return;
   pitchEl.innerHTML = '';
@@ -223,29 +199,22 @@ function displayTeamLineup(teamId, side = 'home') {
       const slot = document.createElement('div');
       slot.className = 'player-slot';
 
-      // 1. Jersey Box
       const jerseyBox = document.createElement('div');
       jerseyBox.className = 'jersey-icon-box';
-      
       const kitImg = createPlayerKitElement(team.teamCode, isGK);
       const roleTag = document.createElement('span');
       roleTag.className = 'role-tag';
       roleTag.textContent = player.role;
-
       jerseyBox.appendChild(kitImg);
       jerseyBox.appendChild(roleTag);
 
-      // 2. Name Plate
       const namePlate = document.createElement('div');
       namePlate.className = 'name-plate';
-      
       const nameText = document.createElement('span');
       nameText.className = 'player-name-text';
       nameText.textContent = player.name;
-
       namePlate.appendChild(nameText);
 
-      // Assemble Slot
       slot.appendChild(jerseyBox);
       slot.appendChild(namePlate);
       rowEl.appendChild(slot);
@@ -261,7 +230,7 @@ function startAutoRotation() {
     clearInterval(autoSwitchTimer);
     autoSwitchTimer = null;
   }
-  
+
   if (!isAutoSwitchEnabled) return;
 
   autoSwitchTimer = setInterval(() => {
@@ -393,30 +362,36 @@ function resetClock() {
   saveBroadcastState();
 }
 
-// User Action Handlers & Event Setup
+// User Action Handlers (Dual 'change' and 'input' bindings for OBS CEF)
 function setupEvents() {
   const homeSelect = document.getElementById('homeSelect');
   const awaySelect = document.getElementById('awaySelect');
 
+  const onHomeChange = () => {
+    updateBottomScoreboard();
+    displayTeamLineup(homeSelect.value, 'home');
+    startAutoRotation();
+    saveBroadcastState();
+  };
+
+  const onAwayChange = () => {
+    updateBottomScoreboard();
+    displayTeamLineup(awaySelect.value, 'away');
+    startAutoRotation();
+    saveBroadcastState();
+  };
+
   if (homeSelect) {
-    homeSelect.addEventListener('change', () => {
-      updateBottomScoreboard();
-      displayTeamLineup(homeSelect.value, 'home');
-      startAutoRotation();
-      saveBroadcastState();
-    });
+    homeSelect.addEventListener('change', onHomeChange);
+    homeSelect.addEventListener('input', onHomeChange);
   }
 
   if (awaySelect) {
-    awaySelect.addEventListener('change', () => {
-      updateBottomScoreboard();
-      displayTeamLineup(awaySelect.value, 'away');
-      startAutoRotation();
-      saveBroadcastState();
-    });
+    awaySelect.addEventListener('change', onAwayChange);
+    awaySelect.addEventListener('input', onAwayChange);
   }
 
-  // Score Controls
+  // Score Steppers
   document.getElementById('btnHomeScoreAdd')?.addEventListener('click', () => { homeScore++; updateBottomScoreboard(); });
   document.getElementById('btnHomeScoreSub')?.addEventListener('click', () => { if (homeScore > 0) homeScore--; updateBottomScoreboard(); });
   document.getElementById('btnAwayScoreAdd')?.addEventListener('click', () => { awayScore++; updateBottomScoreboard(); });
@@ -458,11 +433,8 @@ function setupEvents() {
     document.getElementById('streamerDashboard')?.classList.toggle('hidden');
   });
 
-  // ==========================================
-  // ANTI-ACCIDENTAL REFRESH GUARD
-  // ==========================================
+  // Anti-Accidental Refresh Guard
   window.addEventListener('beforeunload', (e) => {
-    // Timer ပြေးနေချိန် သို့မဟုတ် ရမှတ်များ ရှိနေချိန်တွင် Refresh သို့မဟုတ် Tab ပိတ်မိပါက browser prompt ပြပေးခြင်း
     if (isTimerRunning || matchSeconds > 0 || homeScore > 0 || awayScore > 0) {
       e.preventDefault();
       e.returnValue = 'Live stream is currently active. Are you sure you want to reload?';
@@ -470,7 +442,6 @@ function setupEvents() {
     }
   });
 
-  // URL Parameter check (?controls=false)
   const params = new URLSearchParams(window.location.search);
   if (params.get('controls') === 'false') {
     document.getElementById('streamerDashboard')?.classList.add('hidden');
@@ -492,8 +463,6 @@ function initDropdowns() {
   });
 
   const params = new URLSearchParams(window.location.search);
-  
-  // Storage တွင် သိမ်းဆည်းထားသော အသင်း ID သို့မဟုတ် URL/Default ID ဖြင့် ဦးစားပေး ခေါ်ယူခြင်း
   const savedHome = localStorage.getItem(STORAGE_KEYS.HOME_TEAM_ID);
   const savedAway = localStorage.getItem(STORAGE_KEYS.AWAY_TEAM_ID);
 
@@ -507,7 +476,7 @@ function initDropdowns() {
 
 // App Bootstrapper
 async function initApp() {
-  loadBroadcastState(); // Refresh မဖြစ်မီ သိမ်းထားသော ပွဲချိန်နှင့် ရမှတ်များ ပြန်လည်ဆွဲယူခြင်း
+  loadBroadcastState();
   setupEvents();
   updateClockHUD();
 
